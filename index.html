@@ -111,6 +111,7 @@
         .theme-rekenen { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
         .theme-taal { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
         .theme-hoofdsteden { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+        .theme-koppel { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
 
         .theme-icon-bg {
             position: absolute;
@@ -261,6 +262,50 @@
 
         .option-btn.dimmed {
             opacity: 0.55;
+        }
+
+        /* Koppelvragen specifieke selectie-styling */
+        .option-btn.couple-selected-irem {
+            border-color: #ec4899 !important;
+            background-color: #fdf2f8 !important;
+            color: #9d174d !important;
+            font-weight: 600;
+        }
+
+        .option-btn.couple-selected-irem .option-letter {
+            background-color: #ec4899 !important;
+            color: #ffffff !important;
+        }
+
+        .option-btn.couple-selected-arda {
+            border-color: #0284c7 !important;
+            background-color: #f0f9ff !important;
+            color: #075985 !important;
+            font-weight: 600;
+        }
+
+        .option-btn.couple-selected-arda .option-letter {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
+        }
+
+        .badge-irem {
+            background-color: #fce7f3;
+            color: #be185d;
+            border: 1px solid #f9a8d4;
+        }
+
+        .badge-arda {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #7dd3fc;
+        }
+
+        .couple-answer-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.9rem;
+            background-color: #f8fafc;
+            padding: 0.75rem 1rem;
         }
 
         /* Vaste gereserveerde ruimte voor de knop 'Volgende vraag' zodat de layout niet verspringt */
@@ -419,7 +464,7 @@
             </a>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-light text-dark border d-none d-sm-inline-block py-2 px-3 rounded-pill">
-                    12 Quizzen • 240 Vragen
+                    15 Quizzen • 300 Vragen
                 </span>
                 <button id="navHomeBtn" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none" onclick="confirmReturnToMenu()">
                     <i class="bi bi-house-door me-1"></i> Hoofdmenu
@@ -436,7 +481,7 @@
             <div class="text-center mb-4 mb-md-5">
                 <h1 class="fw-bold display-6 mb-2">Kies jouw uitdaging</h1>
                 <p class="text-muted lead fs-6 mx-auto" style="max-width: 600px;">
-                    Selecteer een van de vier thema's en kies vervolgens een variant. Elke quiz bestaat uit <strong>20 gevarieerde vragen</strong>.
+                    Selecteer een van de vijf thema's en kies vervolgens een variant. Elke quiz bestaat uit <strong>20 gevarieerde vragen</strong>.
                 </p>
             </div>
 
@@ -505,37 +550,81 @@
         <!-- 3. RESULTATEN VIEW -->
         <section id="resultView" class="d-none fade-in">
             <div class="row justify-content-center">
-                <div class="col-12 col-md-8 col-lg-6">
+                <div class="col-12 col-md-9 col-lg-7">
                     <div class="card quiz-card p-4 p-md-5 text-center">
                         <span id="resultThemeLabel" class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 mx-auto mb-3">
                             Thema • Variant
                         </span>
                         <h2 class="fw-bold mb-4">Quiz Voltooid!</h2>
 
-                        <!-- Score Cirkel -->
-                        <div id="scoreCircle" class="score-circle mb-3">
-                            <span id="finalScoreText" class="display-6 fw-bold text-dark">16 / 20</span>
-                            <span id="finalPercentageText" class="text-muted fw-semibold">80%</span>
-                        </div>
+                        <!-- Standaard Kennisquiz Resultaten -->
+                        <div id="standardResultSection">
+                            <!-- Score Cirkel -->
+                            <div id="scoreCircle" class="score-circle mb-3">
+                                <span id="finalScoreText" class="display-6 fw-bold text-dark">16 / 20</span>
+                                <span id="finalPercentageText" class="text-muted fw-semibold">80%</span>
+                            </div>
 
-                        <!-- Beoordeling -->
-                        <h4 id="resultRatingTitle" class="fw-bold mt-3 mb-2">Uitstekend gedaan!</h4>
-                        <p id="resultRatingMessage" class="text-muted mb-4">
-                            Je hebt een geweldige score neergezet. Je beheerst dit onderwerp erg goed!
-                        </p>
+                            <!-- Beoordeling -->
+                            <h4 id="resultRatingTitle" class="fw-bold mt-3 mb-2">Uitstekend gedaan!</h4>
+                            <p id="resultRatingMessage" class="text-muted mb-4">
+                                Je hebt een geweldige score neergezet. Je beheerst dit onderwerp erg goed!
+                            </p>
 
-                        <!-- Statistieken Badges -->
-                        <div class="row g-2 mb-4">
-                            <div class="col-6">
-                                <div class="p-3 rounded-4 bg-success-subtle text-success">
-                                    <div class="fs-4 fw-bold" id="correctCountStat">16</div>
-                                    <div class="small fw-semibold">Goed beantwoord</div>
+                            <!-- Statistieken Badges -->
+                            <div class="row g-2 mb-4">
+                                <div class="col-6">
+                                    <div class="p-3 rounded-4 bg-success-subtle text-success">
+                                        <div class="fs-4 fw-bold" id="correctCountStat">16</div>
+                                        <div class="small fw-semibold">Goed beantwoord</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 rounded-4 bg-danger-subtle text-danger">
+                                        <div class="fs-4 fw-bold" id="wrongCountStat">4</div>
+                                        <div class="small fw-semibold">Fout beantwoord</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="p-3 rounded-4 bg-danger-subtle text-danger">
-                                    <div class="fs-4 fw-bold" id="wrongCountStat">4</div>
-                                    <div class="small fw-semibold">Fout beantwoord</div>
+                        </div>
+
+                        <!-- Koppelvragen (Irem & Arda) Resultaten -->
+                        <div id="coupleResultSection" class="d-none">
+                            <h4 id="coupleSummaryTitle" class="fw-bold mb-2">Jullie Koppelverdeling</h4>
+                            <p id="coupleSummaryMessage" class="text-muted mb-4">
+                                Bekijk hieronder wie het vaakst werd gekozen en loop alle 20 antwoorden nog eens langs!
+                            </p>
+
+                            <!-- Percentage & Aantal Verdeling -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="p-3 rounded-4" style="background-color: #fdf2f8; color: #be185d;">
+                                        <div class="fs-3 fw-bold" id="iremStatText">50%</div>
+                                        <div class="small fw-semibold" id="iremCountLabel">Irem (10× gekozen)</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 rounded-4" style="background-color: #f0f9ff; color: #0369a1;">
+                                        <div class="fs-3 fw-bold" id="ardaStatText">50%</div>
+                                        <div class="small fw-semibold" id="ardaCountLabel">Arda (10× gekozen)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visuele Verdelingsbalk -->
+                            <div class="progress mb-4" style="height: 0.9rem;">
+                                <div id="iremProgressBar" class="progress-bar" style="width: 50%; background-color: #ec4899;"></div>
+                                <div id="ardaProgressBar" class="progress-bar" style="width: 50%; background-color: #0284c7;"></div>
+                            </div>
+
+                            <!-- Volledig Overzicht van alle 20 Vragen -->
+                            <div class="text-start mb-4">
+                                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-list-check text-primary"></i>
+                                    <span>Overzicht van alle 20 keuzes</span>
+                                </h5>
+                                <div id="coupleAnswersList" class="d-flex flex-column gap-2">
+                                    <!-- Wordt dynamisch gevuld door JavaScript -->
                                 </div>
                             </div>
                         </div>
@@ -947,6 +1036,96 @@
                         ]
                     }
                 ]
+            },
+
+            // =========================================================================
+            // THEMA 5: KOPPELVRAGEN (IREM & ARDA)
+            // =========================================================================
+            {
+                id: "koppel",
+                title: "Koppelvragen (Irem & Arda)",
+                subtitle: "Wie doet wat? Kies tussen Irem en Arda en bekijk jullie overzicht",
+                icon: "bi-heart-fill",
+                colorClass: "theme-koppel",
+                badgeClass: "bg-danger",
+                isCoupleQuiz: true,
+                variants: [
+                    {
+                        title: "Variant 1: Dagelijks Leven & Huishouden",
+                        questions: [
+                            { q: "Wie zou later het minst vaak koken?", o: ["Irem", "Arda"] },
+                            { q: "Wie is er bijna altijd te laat voor een afspraak?", o: ["Irem", "Arda"] },
+                            { q: "Wie laat zijn of haar spullen overal rondslingeren?", o: ["Irem", "Arda"] },
+                            { q: "Wie doet het langst over klaarmaken voor de spiegel?", o: ["Irem", "Arda"] },
+                            { q: "Wie vergeet het vaakst waar de sleutels of telefoon liggen?", o: ["Irem", "Arda"] },
+                            { q: "Wie kan er het slechtst tegen honger (hangry)?", o: ["Irem", "Arda"] },
+                            { q: "Wie snoozet de wekker 's ochtends het vaakst?", o: ["Irem", "Arda"] },
+                            { q: "Wie doet het liefst de afwas of ruimt de vaatwasser in?", o: ["Irem", "Arda"] },
+                            { q: "Wie koopt tijdens het boodschappen doen de meeste onnodige snacks?", o: ["Irem", "Arda"] },
+                            { q: "Wie heeft het altijd koud in huis en zet de verwarming hoger?", o: ["Irem", "Arda"] },
+                            { q: "Wie valt er als eerste in slaap tijdens een film op de bank?", o: ["Irem", "Arda"] },
+                            { q: "Wie kan er absoluut niet tegen rommel en begint meteen op te ruimen?", o: ["Irem", "Arda"] },
+                            { q: "Wie bestelt het liefst eten als er geen zin is om te koken?", o: ["Irem", "Arda"] },
+                            { q: "Wie zit het langst op zijn of haar telefoon in bed?", o: ["Irem", "Arda"] },
+                            { q: "Wie maakt er van een klein griepje meteen een groot drama?", o: ["Irem", "Arda"] },
+                            { q: "Wie drinkt er op een dag de meeste koppen koffie of thee?", o: ["Irem", "Arda"] },
+                            { q: "Wie is er het handigst met klusjes in en rond het huis?", o: ["Irem", "Arda"] },
+                            { q: "Wie vergeet het snelst om op appjes te reageren?", o: ["Irem", "Arda"] },
+                            { q: "Wie zingt er het hardst mee onder de douche of in de auto?", o: ["Irem", "Arda"] },
+                            { q: "Wie houdt het meest van uitslapen in het weekend?", o: ["Irem", "Arda"] }
+                        ]
+                    },
+                    {
+                        title: "Variant 2: Relatie & Romantiek",
+                        questions: [
+                            { q: "Wie zegt het vaakst als eerste 'Ik hou van jou'?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het meest romantisch en bedenkt de leukste verrassingen?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het koppigst tijdens een kleine discussie?", o: ["Irem", "Arda"] },
+                            { q: "Wie maakt het na een meningsverschil als eerste weer goed?", o: ["Irem", "Arda"] },
+                            { q: "Wie onthoudt alle belangrijke datums en jubilea tot op de dag nauwkeurig?", o: ["Irem", "Arda"] },
+                            { q: "Wie geeft de beste en langste knuffels?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het meest jaloers aangelegd?", o: ["Irem", "Arda"] },
+                            { q: "Wie huilt het snelst bij een emotionele film of serie?", o: ["Irem", "Arda"] },
+                            { q: "Wie maakt er stiekem de meeste foto's van de ander?", o: ["Irem", "Arda"] },
+                            { q: "Wie geeft het vaakst spontane complimentjes?", o: ["Irem", "Arda"] },
+                            { q: "Wie heeft altijd gelijk (of vindt zelf van wel)?", o: ["Irem", "Arda"] },
+                            { q: "Wie plant het vaakst een gezellige date-night?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het beste in het bewaren van een geheim of verrassing?", o: ["Irem", "Arda"] },
+                            { q: "Wie vraagt het vaakst 'Waar denk je aan?'", o: ["Irem", "Arda"] },
+                            { q: "Wie is het zorgzaamst als de ander zich niet lekker voelt?", o: ["Irem", "Arda"] },
+                            { q: "Wie kan het langst boos of stil blijven?", o: ["Irem", "Arda"] },
+                            { q: "Wie stelt het vaakst voor om samen ergens heen te gaan?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het meest beschermend over de ander?", o: ["Irem", "Arda"] },
+                            { q: "Wie lacht er altijd om zijn of haar eigen grappen?", o: ["Irem", "Arda"] },
+                            { q: "Wie is de grootste knuffelkont op de bank?", o: ["Irem", "Arda"] }
+                        ]
+                    },
+                    {
+                        title: "Variant 3: Vakantie, Toekomst & Grappig",
+                        questions: [
+                            { q: "Wie geeft het meeste geld uit aan onzin?", o: ["Irem", "Arda"] },
+                            { q: "Wie pakt drie dagen van tevoren al de koffer in voor vakantie?", o: ["Irem", "Arda"] },
+                            { q: "Wie is de beste chauffeur op lange autoritten?", o: ["Irem", "Arda"] },
+                            { q: "Wie kiest de muziek uit tijdens een roadtrip?", o: ["Irem", "Arda"] },
+                            { q: "Wie raakt het snelst verdwaald zonder Google Maps?", o: ["Irem", "Arda"] },
+                            { q: "Wie zou het eerst een huisdier willen adopteren?", o: ["Irem", "Arda"] },
+                            { q: "Wie kan er het beste onderhandelen over de prijs op vakantie?", o: ["Irem", "Arda"] },
+                            { q: "Wie overleeft het langst op een onbewoond eiland?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het strengst bij het opvoeden van toekomstige kinderen?", o: ["Irem", "Arda"] },
+                            { q: "Wie verwent toekomstige kinderen of huisdieren het meest?", o: ["Irem", "Arda"] },
+                            { q: "Wie durft op vakantie het gekste nieuwe eten te proeven?", o: ["Irem", "Arda"] },
+                            { q: "Wie is op het vliegveld het meest gestrest of alles wel mee is?", o: ["Irem", "Arda"] },
+                            { q: "Wie wint er meestal met bordspelletjes of kaartspellen?", o: ["Irem", "Arda"] },
+                            { q: "Wie kan het slechtst tegen zijn of haar verlies?", o: ["Irem", "Arda"] },
+                            { q: "Wie is het meest sociaal en maakt overal meteen een praatje?", o: ["Irem", "Arda"] },
+                            { q: "Wie zou per ongeluk een geheime verrassing verklappen?", o: ["Irem", "Arda"] },
+                            { q: "Wie droomt het meest over verre reizen naar de zon?", o: ["Irem", "Arda"] },
+                            { q: "Wie beheert later het beste de spaarrekening?", o: ["Irem", "Arda"] },
+                            { q: "Wie danst er op een feestje als eerste op de dansvloer?", o: ["Irem", "Arda"] },
+                            { q: "Wie zou als eerste toegeven als er iets mis is gegaan?", o: ["Irem", "Arda"] }
+                        ]
+                    }
+                ]
             }
         ];
 
@@ -958,6 +1137,7 @@
         let currentQuestions = [];
         let currentQuestionIndex = 0;
         let score = 0;
+        let coupleAnswers = [];
         let isAnswered = false;
         let quitModalInstance = null;
 
@@ -1020,8 +1200,16 @@
         /**
          * Schudt de antwoordopties van een vraag willekeurig zodat het juiste antwoord
          * niet altijd op positie A staat, terwijl de juiste index behouden blijft.
+         * Voor koppelvragen blijven de vaste opties ['Irem', 'Arda'] in vaste volgorde staan.
          */
-        function prepareQuestions(rawQuestions) {
+        function prepareQuestions(rawQuestions, isCoupleQuiz = false) {
+            if (isCoupleQuiz) {
+                return rawQuestions.map(item => ({
+                    q: item.q,
+                    o: ["Irem", "Arda"]
+                }));
+            }
+
             return rawQuestions.map(item => {
                 const correctText = item.o[item.a];
                 const shuffledOptions = [...item.o];
@@ -1046,9 +1234,11 @@
         function startQuiz(themeIdx, varIdx) {
             currentTheme = quizDatabase[themeIdx];
             currentVariant = currentTheme.variants[varIdx];
-            currentQuestions = prepareQuestions(currentVariant.questions);
+            const isCouple = Boolean(currentTheme.isCoupleQuiz);
+            currentQuestions = prepareQuestions(currentVariant.questions, isCouple);
             currentQuestionIndex = 0;
             score = 0;
+            coupleAnswers = [];
             isAnswered = false;
 
             // Vergrendel de mobiele viewport op 100dvh tijdens de quiz
@@ -1066,19 +1256,28 @@
             badge.className = `badge rounded-pill px-3 py-2 mb-1 ${currentTheme.colorClass} text-white`;
 
             document.getElementById("quizVariantTitle").textContent = currentVariant.title;
-            document.getElementById("liveScoreBadge").textContent = `Score: 0`;
+
+            const liveScoreBadge = document.getElementById("liveScoreBadge");
+            if (isCouple) {
+                liveScoreBadge.textContent = `Irem & Arda`;
+                liveScoreBadge.className = "badge rounded-pill px-3 py-1 badge-irem";
+            } else {
+                liveScoreBadge.textContent = `Score: 0`;
+                liveScoreBadge.className = "badge bg-primary-subtle text-primary rounded-pill px-3 py-1";
+            }
 
             window.scrollTo({ top: 0, behavior: "instant" });
             renderQuestion();
         }
 
         /**
-         * Toont de huidige vraag en de 4 antwoordopties
+         * Toont de huidige vraag en de antwoordopties
          */
         function renderQuestion() {
             isAnswered = false;
             const total = currentQuestions.length;
             const qObj = currentQuestions[currentQuestionIndex];
+            const isCouple = Boolean(currentTheme.isCoupleQuiz);
 
             // Voortgang bijwerken
             document.getElementById("questionCounter").textContent = `Vraag ${currentQuestionIndex + 1} van ${total}`;
@@ -1096,7 +1295,7 @@
             const nextBtn = document.getElementById("nextQuestionBtn");
             nextBtn.classList.add("is-hidden");
             nextBtn.innerHTML = (currentQuestionIndex === total - 1)
-                ? `Bekijk eindresultaat <i class="bi bi-trophy-fill ms-2"></i>`
+                ? (isCouple ? `Bekijk overzicht <i class="bi bi-heart-fill ms-2"></i>` : `Bekijk eindresultaat <i class="bi bi-trophy-fill ms-2"></i>`)
                 : `Volgende vraag <i class="bi bi-arrow-right ms-2"></i>`;
 
             // Opties renderen
@@ -1107,8 +1306,13 @@
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "option-btn";
+
+                const badgeContent = isCouple
+                    ? `<i class="bi bi-person-fill"></i>`
+                    : optionLetters[idx];
+
                 btn.innerHTML = `
-                    <span class="option-letter">${optionLetters[idx]}</span>
+                    <span class="option-letter">${badgeContent}</span>
                     <span class="flex-grow-1">${optionText}</span>
                 `;
                 btn.onclick = () => handleAnswer(idx, btn);
@@ -1124,39 +1328,72 @@
             isAnswered = true;
 
             const qObj = currentQuestions[currentQuestionIndex];
-            const correctIndex = qObj.a;
+            const isCouple = Boolean(currentTheme.isCoupleQuiz);
             const allButtons = document.querySelectorAll("#optionsContainer .option-btn");
             const feedbackBanner = document.getElementById("feedbackBanner");
             const feedbackIcon = document.getElementById("feedbackIcon");
             const feedbackSummary = document.getElementById("feedbackSummary");
 
-            // Alle knoppen uitschakelen en kleuren toewijzen
-            allButtons.forEach((btn, idx) => {
-                btn.disabled = true;
-                if (idx === correctIndex) {
-                    btn.classList.add("correct");
-                    btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-check-lg"></i>`;
-                } else if (idx === selectedIndex) {
-                    btn.classList.add("wrong");
-                    btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-x-lg"></i>`;
-                } else {
-                    btn.classList.add("dimmed");
-                }
-            });
-
-            // Compacte feedback-banner en score bijwerken
             feedbackBanner.style.visibility = "visible";
 
-            if (selectedIndex === correctIndex) {
-                score++;
-                document.getElementById("liveScoreBadge").textContent = `Score: ${score}`;
-                feedbackBanner.classList.add("bg-success-subtle", "text-success");
-                feedbackIcon.className = "bi bi-check-circle-fill flex-shrink-0";
-                feedbackSummary.textContent = "Goed gedaan! Dat is het juiste antwoord.";
+            if (isCouple) {
+                const chosenPerson = qObj.o[selectedIndex]; // "Irem" of "Arda"
+                coupleAnswers.push({
+                    question: qObj.q,
+                    choice: chosenPerson
+                });
+
+                allButtons.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if (idx === selectedIndex) {
+                        btn.classList.add(chosenPerson === "Irem" ? "couple-selected-irem" : "couple-selected-arda");
+                        btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-heart-fill"></i>`;
+                    } else {
+                        btn.classList.add("dimmed");
+                    }
+                });
+
+                if (chosenPerson === "Irem") {
+                    feedbackBanner.style.backgroundColor = "#fdf2f8";
+                    feedbackBanner.style.color = "#be185d";
+                } else {
+                    feedbackBanner.style.backgroundColor = "#f0f9ff";
+                    feedbackBanner.style.color = "#0369a1";
+                }
+                feedbackIcon.className = "bi bi-heart-fill flex-shrink-0";
+                feedbackSummary.innerHTML = `Jullie keuze: <strong>${chosenPerson}</strong>`;
             } else {
-                feedbackBanner.classList.add("bg-danger-subtle", "text-danger");
-                feedbackIcon.className = "bi bi-exclamation-circle-fill flex-shrink-0";
-                feedbackSummary.innerHTML = `Fout! Juist: <strong>${optionLetters[correctIndex]} (${qObj.o[correctIndex]})</strong>`;
+                // Reset eventuele inline kleuren van koppelvragen
+                feedbackBanner.style.backgroundColor = "";
+                feedbackBanner.style.color = "";
+
+                const correctIndex = qObj.a;
+
+                // Alle knoppen uitschakelen en kleuren toewijzen
+                allButtons.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if (idx === correctIndex) {
+                        btn.classList.add("correct");
+                        btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-check-lg"></i>`;
+                    } else if (idx === selectedIndex) {
+                        btn.classList.add("wrong");
+                        btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-x-lg"></i>`;
+                    } else {
+                        btn.classList.add("dimmed");
+                    }
+                });
+
+                if (selectedIndex === correctIndex) {
+                    score++;
+                    document.getElementById("liveScoreBadge").textContent = `Score: ${score}`;
+                    feedbackBanner.classList.add("bg-success-subtle", "text-success");
+                    feedbackIcon.className = "bi bi-check-circle-fill flex-shrink-0";
+                    feedbackSummary.textContent = "Goed gedaan! Dat is het juiste antwoord.";
+                } else {
+                    feedbackBanner.classList.add("bg-danger-subtle", "text-danger");
+                    feedbackIcon.className = "bi bi-exclamation-circle-fill flex-shrink-0";
+                    feedbackSummary.innerHTML = `Fout! Juist: <strong>${optionLetters[correctIndex]} (${qObj.o[correctIndex]})</strong>`;
+                }
             }
 
             // Voortgangsbalk naar huidige voltooide vraag zetten
@@ -1180,7 +1417,7 @@
         }
 
         /**
-         * Toont het resultatenscherm met score, percentage en beoordeling
+         * Toont het resultatenscherm met score of koppeloverzicht
          */
         function showResults() {
             document.body.classList.remove("quiz-active");
@@ -1188,35 +1425,91 @@
             document.getElementById("resultView").classList.remove("d-none");
 
             const total = currentQuestions.length;
-            const percentage = Math.round((score / total) * 100);
-            const wrong = total - score;
+            const isCouple = Boolean(currentTheme.isCoupleQuiz);
+            const standardSection = document.getElementById("standardResultSection");
+            const coupleSection = document.getElementById("coupleResultSection");
 
             document.getElementById("resultThemeLabel").textContent = `${currentTheme.title} • ${currentVariant.title}`;
-            document.getElementById("finalScoreText").textContent = `${score} / ${total}`;
-            document.getElementById("finalPercentageText").textContent = `${percentage}%`;
-            document.getElementById("correctCountStat").textContent = score;
-            document.getElementById("wrongCountStat").textContent = wrong;
 
-            const circle = document.getElementById("scoreCircle");
-            const ratingTitle = document.getElementById("resultRatingTitle");
-            const ratingMsg = document.getElementById("resultRatingMessage");
+            if (isCouple) {
+                standardSection.classList.add("d-none");
+                coupleSection.classList.remove("d-none");
 
-            if (percentage >= 85) {
-                circle.style.borderColor = "#10b981";
-                ratingTitle.textContent = "Meesterlijk! Een topscore!";
-                ratingMsg.textContent = "Indrukwekkend resultaat! Je hebt een uitstekende kennis van dit onderwerp.";
-            } else if (percentage >= 65) {
-                circle.style.borderColor = "#3b82f6";
-                ratingTitle.textContent = "Goed gedaan! Ruim voldoende.";
-                ratingMsg.textContent = "Je hebt de meeste vragen goed beantwoord. Met nog een beetje oefening haal je de 100%!";
-            } else if (percentage >= 45) {
-                circle.style.borderColor = "#f59e0b";
-                ratingTitle.textContent = "Aardig op weg!";
-                ratingMsg.textContent = "Je weet er al het nodige van, maar er valt nog wat te ontdekken. Probeer het gerust nog eens!";
+                const iremCount = coupleAnswers.filter(item => item.choice === "Irem").length;
+                const ardaCount = coupleAnswers.filter(item => item.choice === "Arda").length;
+                const iremPct = Math.round((iremCount / total) * 100);
+                const ardaPct = 100 - iremPct;
+
+                document.getElementById("iremStatText").textContent = `${iremPct}%`;
+                document.getElementById("iremCountLabel").textContent = `Irem (${iremCount}× gekozen)`;
+                document.getElementById("ardaStatText").textContent = `${ardaPct}%`;
+                document.getElementById("ardaCountLabel").textContent = `Arda (${ardaCount}× gekozen)`;
+
+                document.getElementById("iremProgressBar").style.width = `${iremPct}%`;
+                document.getElementById("ardaProgressBar").style.width = `${ardaPct}%`;
+
+                const summaryTitle = document.getElementById("coupleSummaryTitle");
+                const summaryMsg = document.getElementById("coupleSummaryMessage");
+
+                if (iremCount > ardaCount) {
+                    summaryTitle.textContent = "Irem staat het vaakst in de schijnwerpers!";
+                    summaryMsg.textContent = `Irem werd ${iremCount} van de ${total} keer gekozen. Bekijk hieronder alle keuzes per vraag.`;
+                } else if (ardaCount > iremCount) {
+                    summaryTitle.textContent = "Arda staat het vaakst in de schijnwerpers!";
+                    summaryMsg.textContent = `Arda werd ${ardaCount} van de ${total} keer gekozen. Bekijk hieronder alle keuzes per vraag.`;
+                } else {
+                    summaryTitle.textContent = "Precies in balans: 50% Irem & 50% Arda!";
+                    summaryMsg.textContent = "Jullie zijn allebei precies 10 keer gekozen. Bekijk hieronder al jullie antwoorden per vraag.";
+                }
+
+                const listContainer = document.getElementById("coupleAnswersList");
+                listContainer.innerHTML = coupleAnswers.map((entry, idx) => {
+                    const badgeClass = entry.choice === "Irem" ? "badge-irem" : "badge-arda";
+                    return `
+                        <div class="couple-answer-item d-flex justify-content-between align-items-center gap-3">
+                            <div class="small text-dark">
+                                <span class="fw-bold text-muted me-1">${idx + 1}.</span>
+                                <span>${entry.question}</span>
+                            </div>
+                            <span class="badge rounded-pill px-3 py-2 fw-bold flex-shrink-0 ${badgeClass}">
+                                ${entry.choice}
+                            </span>
+                        </div>
+                    `;
+                }).join("");
             } else {
-                circle.style.borderColor = "#ef4444";
-                ratingTitle.textContent = "Blijf oefenen!";
-                ratingMsg.textContent = "Dit was een pittige ronde. Speel de quiz opnieuw om je score te verbeteren!";
+                coupleSection.classList.add("d-none");
+                standardSection.classList.remove("d-none");
+
+                const percentage = Math.round((score / total) * 100);
+                const wrong = total - score;
+
+                document.getElementById("finalScoreText").textContent = `${score} / ${total}`;
+                document.getElementById("finalPercentageText").textContent = `${percentage}%`;
+                document.getElementById("correctCountStat").textContent = score;
+                document.getElementById("wrongCountStat").textContent = wrong;
+
+                const circle = document.getElementById("scoreCircle");
+                const ratingTitle = document.getElementById("resultRatingTitle");
+                const ratingMsg = document.getElementById("resultRatingMessage");
+
+                if (percentage >= 85) {
+                    circle.style.borderColor = "#10b981";
+                    ratingTitle.textContent = "Meesterlijk! Een topscore!";
+                    ratingMsg.textContent = "Indrukwekkend resultaat! Je hebt een uitstekende kennis van dit onderwerp.";
+                } else if (percentage >= 65) {
+                    circle.style.borderColor = "#3b82f6";
+                    ratingTitle.textContent = "Goed gedaan! Ruim voldoende.";
+                    ratingMsg.textContent = "Je hebt de meeste vragen goed beantwoord. Met nog een beetje oefening haal je de 100%!";
+                } else if (percentage >= 45) {
+                    circle.style.borderColor = "#f59e0b";
+                    ratingTitle.textContent = "Aardig op weg!";
+                    ratingMsg.textContent = "Je weet er al het nodige van, maar er valt nog wat te ontdekken. Probeer het gerust nog eens!";
+                } else {
+                    circle.style.borderColor = "#ef4444";
+                    ratingTitle.textContent = "Blijf oefenen!";
+                    ratingMsg.textContent = "Dit was een pittige ronde. Speel de quiz opnieuw om je score te verbeteren!";
+                }
             }
 
             window.scrollTo({ top: 0, behavior: "smooth" });
