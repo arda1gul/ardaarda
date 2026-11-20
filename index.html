@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KennisMeester - Interactieve Quiz App</title>
+    <!-- Bootstrap 5 CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            --card-hover-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.14);
+        }
+
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Vergrendel de viewport uitsluitend tijdens het spelen van een quiz */
+        body.quiz-active {
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden;
+        }
+
+        body.quiz-active main {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            overflow: hidden;
+        }
+
+        body.quiz-active #quizView {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        body.quiz-active #quizView > .row {
+            flex: 1 1 auto;
+            min-height: 0;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        body.quiz-active #quizView .col-12 {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        body.quiz-active footer {
+            display: none !important;
+        }
+
+        /* Navbar Styling */
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        /* Thema Kaarten */
+        .theme-card {
+            border: none;
+            border-radius: 1.25rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .theme-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .theme-header {
+            padding: 1.5rem;
+            color: #ffffff;
+            position: relative;
+        }
+
+        .theme-turkije { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); }
+        .theme-rekenen { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        .theme-taal { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .theme-hoofdsteden { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+
+        .theme-icon-bg {
+            position: absolute;
+            right: -10px;
+            bottom: -15px;
+            font-size: 5.5rem;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        /* Variant Knoppen */
+        .variant-btn {
+            border-radius: 0.85rem;
+            padding: 0.85rem 1.1rem;
+            font-weight: 600;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            color: #334155;
+            gap: 0.5rem;
+        }
+
+        .variant-btn:hover, .variant-btn:focus {
+            background-color: #ffffff;
+            border-color: #94a3b8;
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Quiz Container & Vraag Kaart */
+        .quiz-card {
+            border: none;
+            border-radius: 1.5rem;
+            box-shadow: var(--card-shadow);
+            background: #ffffff;
+        }
+
+        body.quiz-active .quiz-card {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 0;
+            overflow: hidden;
+            margin-bottom: 0 !important;
+        }
+
+        .progress {
+            height: 0.65rem;
+            border-radius: 1rem;
+            background-color: #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            border-radius: 1rem;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Antwoord Knoppen */
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 0.9rem 1.15rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.95rem;
+            border: 2px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: clamp(0.88rem, 3.4vw, 1.05rem);
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            transition: all 0.18s ease;
+            min-height: 54px;
+            cursor: pointer;
+            word-break: break-word;
+        }
+
+        .option-btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.99);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            opacity: 1;
+        }
+
+        .option-letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 0.6rem;
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-right: 0.85rem;
+            flex-shrink: 0;
+            transition: all 0.18s ease;
+        }
+
+        .option-btn:hover:not(:disabled) .option-letter {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        /* Juist en Fout Statussen */
+        .option-btn.correct {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+            color: #065f46 !important;
+            font-weight: 600;
+        }
+
+        .option-btn.correct .option-letter {
+            background-color: #10b981 !important;
+            color: #ffffff !important;
+        }
+
+        .option-btn.wrong {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #991b1b !important;
+        }
+
+        .option-btn.wrong .option-letter {
+            background-color: #ef4444 !important;
+            color: #ffffff !important;
+        }
+
+        .option-btn.dimmed {
+            opacity: 0.55;
+        }
+
+        /* Vaste gereserveerde ruimte voor de knop 'Volgende vraag' zodat de layout niet verspringt */
+        .next-btn-slot {
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #nextQuestionBtn.is-hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Mobiele optimalisatie voor het vraagscherm (geen verticaal scrollen op 100dvh) */
+        @media (max-width: 576px) {
+            body.quiz-active .navbar {
+                padding-top: 0.35rem;
+                padding-bottom: 0.35rem;
+            }
+
+            body.quiz-active .navbar-brand {
+                font-size: 1.05rem;
+            }
+
+            body.quiz-active .navbar-brand i {
+                font-size: 1.25rem !important;
+            }
+
+            body.quiz-active main {
+                padding-left: 0.65rem;
+                padding-right: 0.65rem;
+                margin-top: 0.35rem !important;
+                margin-bottom: 0.45rem !important;
+            }
+
+            #quizTopBar {
+                margin-bottom: 0.4rem !important;
+            }
+
+            #quizThemeBadge {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.6rem !important;
+                margin-bottom: 0.15rem !important;
+            }
+
+            #quizVariantTitle {
+                font-size: 0.85rem;
+                line-height: 1.2;
+            }
+
+            #quizQuitBtn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.65rem !important;
+            }
+
+            body.quiz-active .quiz-card {
+                padding: 0.8rem !important;
+                border-radius: 1.15rem;
+            }
+
+            #quizMetaRow {
+                font-size: 0.75rem !important;
+                margin-bottom: 0.3rem !important;
+            }
+
+            .progress {
+                height: 0.45rem;
+                margin-bottom: 0.65rem !important;
+            }
+
+            #questionText {
+                font-size: clamp(0.95rem, 3.8vw, 1.2rem) !important;
+                line-height: 1.32 !important;
+                margin-bottom: 0.65rem !important;
+            }
+
+            #optionsContainer {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 0.45rem;
+                margin-bottom: 0.45rem !important;
+            }
+
+            .option-btn {
+                padding: 0.55rem 0.75rem;
+                margin-bottom: 0;
+                min-height: 44px;
+                border-radius: 0.75rem;
+                font-size: clamp(0.84rem, 3.4vw, 0.98rem);
+            }
+
+            .option-letter {
+                width: 26px;
+                height: 26px;
+                font-size: 0.75rem;
+                margin-right: 0.65rem;
+                border-radius: 0.45rem;
+            }
+
+            #feedbackBanner {
+                font-size: 0.78rem;
+                padding: 0.35rem 0.65rem !important;
+                margin-bottom: 0.4rem !important;
+                min-height: 30px;
+            }
+
+            .next-btn-slot {
+                min-height: 44px;
+                margin-top: 0.25rem !important;
+            }
+
+            #nextQuestionBtn {
+                padding-top: 0.55rem !important;
+                padding-bottom: 0.55rem !important;
+                font-size: 0.95rem !important;
+                border-radius: 0.85rem !important;
+            }
+        }
+
+        /* Resultaat Cirkel */
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: 8px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        /* Animatie */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigatiebalk -->
+    <nav class="navbar navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-primary" href="#" onclick="returnToMenu(event)">
+                <i class="bi bi-mortarboard-fill fs-3"></i>
+                <span>KennisMeester</span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border d-none d-sm-inline-block py-2 px-3 rounded-pill">
+                    12 Quizzen • 240 Vragen
+                </span>
+                <button id="navHomeBtn" class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none" onclick="confirmReturnToMenu()">
+                    <i class="bi bi-house-door me-1"></i> Hoofdmenu
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hoofdcontainer -->
+    <main class="container my-4 my-md-5 flex-grow-1">
+
+        <!-- 1. HOOFDMENU VIEW -->
+        <section id="menuView" class="fade-in">
+            <div class="text-center mb-4 mb-md-5">
+                <h1 class="fw-bold display-6 mb-2">Kies jouw uitdaging</h1>
+                <p class="text-muted lead fs-6 mx-auto" style="max-width: 600px;">
+                    Selecteer een van de vier thema's en kies vervolgens een variant. Elke quiz bestaat uit <strong>20 gevarieerde vragen</strong>.
+                </p>
+            </div>
+
+            <div class="row g-4" id="themesGrid">
+                <!-- Wordt dynamisch gevuld door JavaScript -->
+            </div>
+        </section>
+
+        <!-- 2. QUIZ VIEW -->
+        <section id="quizView" class="d-none fade-in">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-8">
+                    <!-- Top Bar met Thema info & Stop-knop -->
+                    <div id="quizTopBar" class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                        <div class="min-w-0">
+                            <span id="quizThemeBadge" class="badge rounded-pill px-3 py-2 mb-1">Thema</span>
+                            <h5 id="quizVariantTitle" class="fw-bold mb-0 text-dark text-truncate">Variant Titel</h5>
+                        </div>
+                        <button id="quizQuitBtn" type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-2 fw-semibold flex-shrink-0" onclick="confirmReturnToMenu()">
+                            <i class="bi bi-x-circle me-1"></i> Stoppen
+                        </button>
+                    </div>
+
+                    <!-- Voortgang & Huidige Score -->
+                    <div class="card quiz-card p-3 p-md-4 mb-4">
+                        <div>
+                            <div id="quizMetaRow" class="d-flex justify-content-between align-items-center mb-2 small fw-semibold">
+                                <span id="questionCounter" class="text-secondary">Vraag 1 van 20</span>
+                                <span id="liveScoreBadge" class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
+                                    Score: 0
+                                </span>
+                            </div>
+                            <div class="progress mb-3 mb-md-4" role="progressbar" aria-label="Quiz voortgang">
+                                <div id="quizProgressBar" class="progress-bar bg-primary" style="width: 5%"></div>
+                            </div>
+
+                            <!-- Vraagtekst -->
+                            <h3 id="questionText" class="fw-bold mb-3 mb-md-4 lh-base fs-4">
+                                Hier komt de vraag te staan...
+                            </h3>
+                        </div>
+
+                        <!-- Antwoordopties -->
+                        <div id="optionsContainer" class="mb-2">
+                            <!-- 4 antwoordknoppen worden hier geplaatst -->
+                        </div>
+
+                        <!-- Compacte Feedback & Vaste Knopruimte onderaan -->
+                        <div>
+                            <div id="feedbackBanner" class="rounded-3 px-3 py-2 mb-2 small fw-semibold d-flex align-items-center gap-2" style="visibility: hidden;">
+                                <i id="feedbackIcon" class="bi"></i>
+                                <span id="feedbackSummary" class="text-truncate">Feedback</span>
+                            </div>
+
+                            <div class="next-btn-slot d-grid mt-1 mt-md-2">
+                                <button id="nextQuestionBtn" class="btn btn-primary btn-lg rounded-4 fw-bold py-3 is-hidden shadow-sm" onclick="nextQuestion()">
+                                    Volgende vraag <i class="bi bi-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. RESULTATEN VIEW -->
+        <section id="resultView" class="d-none fade-in">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card quiz-card p-4 p-md-5 text-center">
+                        <span id="resultThemeLabel" class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 mx-auto mb-3">
+                            Thema • Variant
+                        </span>
+                        <h2 class="fw-bold mb-4">Quiz Voltooid!</h2>
+
+                        <!-- Score Cirkel -->
+                        <div id="scoreCircle" class="score-circle mb-3">
+                            <span id="finalScoreText" class="display-6 fw-bold text-dark">16 / 20</span>
+                            <span id="finalPercentageText" class="text-muted fw-semibold">80%</span>
+                        </div>
+
+                        <!-- Beoordeling -->
+                        <h4 id="resultRatingTitle" class="fw-bold mt-3 mb-2">Uitstekend gedaan!</h4>
+                        <p id="resultRatingMessage" class="text-muted mb-4">
+                            Je hebt een geweldige score neergezet. Je beheerst dit onderwerp erg goed!
+                        </p>
+
+                        <!-- Statistieken Badges -->
+                        <div class="row g-2 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 rounded-4 bg-success-subtle text-success">
+                                    <div class="fs-4 fw-bold" id="correctCountStat">16</div>
+                                    <div class="small fw-semibold">Goed beantwoord</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 rounded-4 bg-danger-subtle text-danger">
+                                    <div class="fs-4 fw-bold" id="wrongCountStat">4</div>
+                                    <div class="small fw-semibold">Fout beantwoord</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actieknoppen -->
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-primary btn-lg rounded-4 fw-bold py-3" onclick="restartCurrentQuiz()">
+                                <i class="bi bi-arrow-repeat me-2"></i> Deze quiz opnieuw spelen
+                            </button>
+                            <button class="btn btn-outline-secondary btn-lg rounded-4 fw-semibold py-3" onclick="showMenuDirectly()">
+                                <i class="bi bi-grid me-2"></i> Kies een ander thema of variant
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bevestigingsmodal voor tussentijds stoppen (geen browser confirm() gebruiken) -->
+    <div class="modal fade" id="quitModal" tabindex="-1" aria-labelledby="quitModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="quitModalLabel">Terug naar hoofdmenu?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                </div>
+                <div class="modal-body text-muted">
+                    Weet je zeker dat je deze quiz wilt verlaten? Je huidige voortgang gaat dan verloren.
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Verder spelen</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4" data-bs-dismiss="modal" onclick="showMenuDirectly()">Ja, stoppen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-top py-3 mt-auto">
+        <div class="container text-center text-muted small">
+            KennisMeester Quiz App &bull; Geschiedenis van Turkije, Rekenen, Nederlandse Taal & Hoofdsteden
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Quiz Data & Applicatielogica -->
+    <script>
+        /**
+         * VOLLEDIGE QUIZ DATABASE
+         * 4 Thema's x 3 Varianten x 20 Unieke Vragen = 240 Vragen
+         * Structuur per vraag: { q: "Vraag", o: ["Optie A", "Optie B", "Optie C", "Optie D"], a: indexVanJuistAntwoord }
+         */
+        const quizDatabase = [
+            // =========================================================================
+            // THEMA 1: GESCHIEDENIS VAN TURKIJE
+            // =========================================================================
+            {
+                id: "turkije",
+                title: "Geschiedenis van Turkije",
+                subtitle: "Van Anatolische beschavingen tot het moderne Turkije",
+                icon: "bi-bank2",
+                colorClass: "theme-turkije",
+                badgeClass: "bg-danger",
+                variants: [
+                    {
+                        title: "Variant 1: Van Ottomaanse Oorsprong tot Bloeitijd",
+                        questions: [
+                            { q: "Wie wordt beschouwd als de stichter van het Ottomaanse Rijk rond het jaar 1299?", o: ["Osman I", "Süleyman de Prachtlievende", "Mehmed II", "Selim I"], a: 0 },
+                            { q: "In welk jaar veroverde sultan Mehmed II Constantinopel?", o: ["1453", "1389", "1492", "1520"], a: 0 },
+                            { q: "Wat was de naam van Constantinopel voordat het door de Ottomanen werd veroverd?", o: ["Byzantium", "Ankara", "Izmir", "Konya"], a: 0 },
+                            { q: "Welke beroemde kathedraal in Istanbul werd na 1453 omgebouwd tot een moskee?", o: ["Hagia Sophia", "Blauwe Moskee", "Süleymaniye-moskee", "Topkapi"], a: 0 },
+                            { q: "Onder welke sultan bereikte het Ottomaanse Rijk in de 16e eeuw zijn grootste culturele en territoriale bloei?", o: ["Süleyman I (de Prachtlievende)", "Murad I", "Bayezid II", "Abdülhamid II"], a: 0 },
+                            { q: "Wat was de naam van de elite-infanterie van het Ottomaanse leger?", o: ["Janitsaren", "Spahi's", "Mamelukken", "Kozakken"], a: 0 },
+                            { q: "Welke stad was de eerste belangrijke hoofdstad van het Ottomaanse Rijk voordat Edirne en Istanbul dat werden?", o: ["Bursa", "Ankara", "Trabzon", "Antalya"], a: 0 },
+                            { q: "Welke Europese hoofdstad werd zowel in 1529 als in 1683 tevergeefs belegerd door het Ottomaanse leger?", o: ["Wenen", "Boedapest", "Belgrado", "Praag"], a: 0 },
+                            { q: "Wat was het Topkapipaleis in Istanbul eeuwenlang?", o: ["De hoofdresidentie van de Ottomaanse sultans", "Een handelsbeurs voor zijde", "De centrale rechtbank", "Een zeehaven"], a: 0 },
+                            { q: "Welke grote architect ontwierp in de 16e eeuw talloze moskeeën, bruggen en badhuizen in het Ottomaanse Rijk?", o: ["Mimar Sinan", "Evliya Çelebi", "Piri Reis", "Ibn Battuta"], a: 0 },
+                            { q: "Welke Ottomaanse admiraal en cartograaf tekende in 1513 een beroemde wereldkaart?", o: ["Piri Reis", "Barbarossa", "Turgut Reis", "Kemal Reis"], a: 0 },
+                            { q: "Welke zeeslag in 1571 betekende een grote nederlaag voor de Ottomaanse vloot tegen een Europese coalitie?", o: ["Slag bij Lepanto", "Slag bij Preveza", "Slag bij Gallipoli", "Slag bij Manzikert"], a: 0 },
+                            { q: "Welk Turkstalig volk versloeg het Byzantijnse Rijk in 1071 bij de Slag bij Manzikert?", o: ["De Seltsjoeken", "De Mongolen", "De Hittieten", "De Göktürken"], a: 0 },
+                            { q: "Welke stad in Centraal-Anatolië was de hoofdstad van het Sultanaat van Rûm?", o: ["Konya", "Kayseri", "Sivas", "Eskişehir"], a: 0 },
+                            { q: "Wat was het 'Millet-systeem' in het Ottomaanse Rijk?", o: ["Zelfbestuur voor religieuze minderheden", "Het belastingstelsel voor boeren", "De opleiding van paleiswachten", "Een handelsverdrag met Venetië"], a: 0 },
+                            { q: "Wie schafte in 1826 het korps van de Janitsaren af tijdens het 'Gunstige Incident'?", o: ["Mahmud II", "Selim III", "Abdülmecid I", "Osman II"], a: 0 },
+                            { q: "Wat wordt bedoeld met de 'Tanzimat-periode' (1839–1876)?", o: ["Een tijdperk van hervormingen en modernisering", "De verovering van Noord-Afrika", "Een burgeroorlog om de troon", "De bouw van de spoorlijn naar Bagdad"], a: 0 },
+                            { q: "Welke bijnaam kreeg het verzwakte Ottomaanse Rijk in de 19e eeuw van Europese diplomaten?", o: ["De zieke man van Europa", "De slapende reus", "De poort naar het Oosten", "Het gebroken zwaard"], a: 0 },
+                            { q: "Welke sultan veroverde in 1517 Egypte en verwierf daarmee de titel van kalief?", o: ["Selim I", "Mehmed I", "Murad IV", "Ahmed I"], a: 0 },
+                            { q: "Welke beroemde moskee in Istanbul staat bekend om haar zes minaretten en blauwe tegels?", o: ["Sultan Ahmetmoskee (Blauwe Moskee)", "Fatih-moskee", "Eyüp Sultan-moskee", "Ortaköy-moskee"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 2: Onafhankelijkheid & Republiek Turkije",
+                        questions: [
+                            { q: "In welk jaar werd de Republiek Turkije officieel uitgeroepen?", o: ["1923", "1918", "1920", "1928"], a: 0 },
+                            { q: "Wie was de oprichter en eerste president van de Republiek Turkije?", o: ["Mustafa Kemal Atatürk", "İsmet İnönü", "Adnan Menderes", "Turgut Özal"], a: 0 },
+                            { q: "Welke stad werd in oktober 1923 de nieuwe hoofdstad van Turkije?", o: ["Ankara", "Istanbul", "Izmir", "Bursa"], a: 0 },
+                            { q: "Aan welke kant vocht het Ottomaanse Rijk tijdens de Eerste Wereldoorlog?", o: ["De Centralen (o.a. Duitsland)", "De Geallieerden", "Het bleef neutraal", "Alleen tegen Rusland"], a: 0 },
+                            { q: "Welke veldslag in 1915 op een schiereiland was een grote overwinning voor het Ottomaanse leger onder leiding van o.a. Mustafa Kemal?", o: ["Slag bij Gallipoli (Çanakkale)", "Slag bij Sakarya", "Slag bij Dumlupınar", "Slag bij Sarıkamış"], a: 0 },
+                            { q: "Welk verdrag uit 1923 erkende internationaal de grenzen van het moderne Turkije?", o: ["Verdrag van Lausanne", "Verdrag van Sèvres", "Verdrag van Versailles", "Verdrag van Brest-Litovsk"], a: 0 },
+                            { q: "Welk alfabet werd in 1928 ingevoerd in Turkije ter vervanging van het Arabische schrift?", o: ["Het Latijnse alfabet", "Het Cyrillische alfabet", "Het Griekse alfabet", "Het Göktürk-schrift"], a: 0 },
+                            { q: "Wat betekent de eretitel 'Atatürk' die Mustafa Kemal in 1934 kreeg?", o: ["Vader der Turken", "Leider van het leger", "Bevrijder van Anatolië", "Eerste burger"], a: 0 },
+                            { q: "Wie volgde Mustafa Kemal Atatürk in 1938 op als tweede president van Turkije?", o: ["İsmet İnönü", "Celâl Bayar", "Fevzi Çakmak", "Cemal Gürsel"], a: 0 },
+                            { q: "In welk jaar kregen vrouwen in Turkije het volledige kiesrecht voor nationale verkiezingen?", o: ["1934", "1923", "1950", "1961"], a: 0 },
+                            { q: "Welke politieke beweging voerde in 1908 een revolutie uit om de grondwet te herstellen?", o: ["De Jonge Turken", "De Janitsaren", "De Tanzimat-groep", "De Anatolische Liga"], a: 0 },
+                            { q: "Wat gebeurde er in 1924 met het eeuwenoude kalifaat in Turkije?", o: ["Het werd officieel afgeschaft", "Het werd verplaatst naar Ankara", "Het werd overgedragen aan Egypte", "Het kreeg alleen een ceremoniële rol"], a: 0 },
+                            { q: "Hoe heet het enorme mausoleum in Ankara waar Atatürk begraven ligt?", o: ["Anıtkabir", "Dolmabahçe", "Çankaya", "Kızılay"], a: 0 },
+                            { q: "In welk jaar trad Turkije toe tot de NAVO?", o: ["1952", "1945", "1960", "1974"], a: 0 },
+                            { q: "Welke rol speelde Turkije tijdens het grootste deel van de Tweede Wereldoorlog?", o: ["Het bleef neutraal tot februari 1945", "Het vocht mee met de Asmogendheden", "Het werd bezet door Italië", "Het vocht vanaf 1939 mee met Groot-Brittannië"], a: 0 },
+                            { q: "Welk verdrag uit 1936 gaf Turkije weer volledige controle over de Bosporus en de Dardanellen?", o: ["Verdrag van Montreux", "Verdrag van Ankara", "Verdrag van Kars", "Verdrag van Mudros"], a: 0 },
+                            { q: "Welke wet uit 1934 verplichtte alle Turkse burgers om een officiële familienaam te kiezen?", o: ["De Achternaamwet", "De Burgerwet", "De Taalwet", "De Onderwijswet"], a: 0 },
+                            { q: "Welke Griekse havenstad in Klein-Azië (nu Izmir) was het toneel van het einde van de Grieks-Turkse Oorlog in 1922?", o: ["Smyrna", "Thessaloniki", "Ephesus", "Pergamon"], a: 0 },
+                            { q: "In welk paleis in Istanbul overleed Mustafa Kemal Atatürk op 10 november 1938?", o: ["Dolmabahçepaleis", "Topkapipaleis", "Yıldızpaleis", "Beylerbeyipaleis"], a: 0 },
+                            { q: "Welke partij won in 1950 de eerste vrije meerpartijenverkiezingen in Turkije onder leiding van Adnan Menderes?", o: ["Democratische Partij (DP)", "Republikeinse Volkspartij (CHP)", "Gerechtigheidspartij (AP)", "Moederlandpartij (ANAP)"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 3: Oude Beschavingen & Moderne Tijd",
+                        questions: [
+                            { q: "Welke machtige bronstijd-beschaving had haar hoofdstad Hattusa in Centraal-Anatolië?", o: ["De Hettieten", "De Feniciërs", "De Sumeriërs", "De Minoërs"], a: 0 },
+                            { q: "In welke Turkse regio ligt de legendarische oudheidkundige stad Troje?", o: ["Çanakkale (noordwesten)", "Antalya (zuiden)", "Van (oosten)", "Trabzon (noordoosten)"], a: 0 },
+                            { q: "Welke prehistorische tempelsite in Zuidoost-Turkije geldt als een van de oudste tempelcomplexen ter wereld?", o: ["Göbeklitepe", "Çatalhöyük", "Ephesus", "Aphrodisias"], a: 0 },
+                            { q: "Welke beroemde stad in West-Turkije herbergde de Tempel van Artemis, een van de zeven wereldwonderen?", o: ["Efeze (Ephesus)", "Milete", "Sardis", "Halicarnassus"], a: 0 },
+                            { q: "Welke koning van Lydië (in West-Anatolië) werd beroemd om zijn enorme rijkdom en de uitvinding van gouden munten?", o: ["Koning Croesus", "Koning Midas", "Alexander de Grote", "Darius I"], a: 0 },
+                            { q: "Welke streek in Centraal-Turkije staat bekend om zijn ondergrondse steden en tufstenen rotskerken uit de vroegchristelijke tijd?", o: ["Cappadocië", "Lycië", "Bithynië", "Cilicië"], a: 0 },
+                            { q: "Welke keizer stichtte in 330 n.Chr. Constantinopel als het 'Nieuwe Rome'?", o: ["Constantijn de Grote", "Justinianus I", "Augustus", "Hadrianus"], a: 0 },
+                            { q: "Welke belangrijke zeestraat scheidt het Europese en Aziatische deel van Istanbul?", o: ["De Bosporus", "De Dardanellen", "De Straat van Gibraltar", "De Straat van Kertsj"], a: 0 },
+                            { q: "In welk jaar sloot Turkije een associatieakkoord (Verdrag van Ankara) met de voorloper van de Europese Unie?", o: ["1963", "1975", "1989", "1999"], a: 0 },
+                            { q: "Welk eiland in de Middellandse Zee werd in 1974 deels bezet door Turkije na een Grieks-Cypriotische staatsgreep?", o: ["Cyprus", "Kreta", "Rhodos", "Lesbos"], a: 0 },
+                            { q: "Welke Turkse premier en later president voerde in de jaren 80 grote economische hervormingen door?", o: ["Turgut Özal", "Süleyman Demirel", "Bülent Ecevit", "Necmettin Erbakan"], a: 0 },
+                            { q: "Welke grote Europese landen sloten in de jaren 60 wervingsverdragen met Turkije voor gastarbeiders (waaronder Nederland in 1964)?", o: ["Onder andere Duitsland en Nederland", "Alleen Frankrijk en Spanje", "Alleen Italië en Griekenland", "Alleen Zweden en Noorwegen"], a: 0 },
+                            { q: "Wat was de naam van de oudheidkundige stad in Oost-Turkije aan het Vanmeer, hoofdstad van het rijk Urartu?", o: ["Tushpa", "Gordium", "Pergamon", "Side"], a: 0 },
+                            { q: "Welke apostel en schrijver van brieven uit het Nieuwe Testament werd geboren in de Zuid-Turkse stad Tarsus?", o: ["Paulus", "Petrus", "Johannes", "Lucas"], a: 0 },
+                            { q: "Welke beroemde berg in Oost-Turkije wordt traditioneel genoemd als de rustplaats van de Ark van Noach?", o: ["De berg Ararat", "De berg Erciyes", "De berg Uludağ", "De berg Nemrut"], a: 0 },
+                            { q: "Welke koning liet in de 1e eeuw v.Chr. kolossale stenen beelden bouwen op de top van de berg Nemrut?", o: ["Antiochus I van Commagene", "Mithridates VI", "Seleucus I", "Attalus III"], a: 0 },
+                            { q: "Welke neolithische nederzetting nabij Konya is een van de best bewaarde vroege steden ter wereld?", o: ["Çatalhöyük", "Hattusa", "Alacahöyük", "Kültepe"], a: 0 },
+                            { q: "Wanneer opende de eerste brug over de Bosporus die Europa en Azië verbond?", o: ["1973 (bij het 50-jarig bestaan van de republiek)", "1950", "1988", "2002"], a: 0 },
+                            { q: "Welke Turkse stad aan de Zwarte Zee was tot 1461 de hoofdstad van het Keizerrijk Trebizonde?", o: ["Trabzon", "Samsun", "Sinop", "Rize"], a: 0 },
+                            { q: "Welke wetenschapper uit het 9e-eeuwse kalifaat van Bagdad had invloed op de wiskunde in de islamitische en Turkse wereld, en gaf zijn naam aan het woord 'algoritme'?", o: ["Al-Chwarizmi", "Al-Farabi", "Ibn Sina", "Al-Biruni"], a: 0 }
+                        ]
+                    }
+                ]
+            },
+
+            // =========================================================================
+            // THEMA 2: REKENQUIZ
+            // =========================================================================
+            {
+                id: "rekenen",
+                title: "Rekenquiz",
+                subtitle: "Hoofdrekenen, procenten, breuken en logische reeksen",
+                icon: "bi-calculator-fill",
+                colorClass: "theme-rekenen",
+                badgeClass: "bg-primary",
+                variants: [
+                    {
+                        title: "Variant 1: Hoofdrekenen & Basisbewerkingen",
+                        questions: [
+                            { q: "Wat is 18 × 15?", o: ["270", "250", "285", "240"], a: 0 },
+                            { q: "Hoeveel is 432 ÷ 12?", o: ["36", "34", "38", "32"], a: 0 },
+                            { q: "Wat is het resultaat van 125 + 387 - 95?", o: ["417", "407", "427", "397"], a: 0 },
+                            { q: "Bereken: 7 + 8 × 6 - 5", o: ["50", "85", "45", "55"], a: 0 },
+                            { q: "Wat is het kwadraat van 16 (16²)?", o: ["256", "226", "246", "266"], a: 0 },
+                            { q: "Wat is de vierkantswortel van 196?", o: ["14", "13", "16", "12"], a: 0 },
+                            { q: "Hoeveel is 2,5 × 14?", o: ["35", "32", "37,5", "30"], a: 0 },
+                            { q: "Wat is 1000 - 368?", o: ["632", "642", "732", "622"], a: 0 },
+                            { q: "Bereken: (24 + 16) ÷ 5 × 3", o: ["24", "18", "30", "12"], a: 0 },
+                            { q: "Wat is 19 × 19?", o: ["361", "341", "381", "321"], a: 0 },
+                            { q: "Hoeveel minuten zitten er in 3,5 uur?", o: ["210 minuten", "180 minuten", "230 minuten", "195 minuten"], a: 0 },
+                            { q: "Wat is 0,4 × 0,6?", o: ["0,24", "2,4", "0,024", "0,10"], a: 0 },
+                            { q: "Hoeveel is 840 ÷ 35?", o: ["24", "22", "26", "28"], a: 0 },
+                            { q: "Wat is de som van alle even getallen tussen 1 en 11 (2 + 4 + 6 + 8 + 10)?", o: ["30", "28", "32", "25"], a: 0 },
+                            { q: "Bereken: 3³ + 4²", o: ["43", "25", "35", "41"], a: 0 },
+                            { q: "Hoeveel is 150 ÷ 0,5?", o: ["300", "75", "150", "30"], a: 0 },
+                            { q: "Wat is het gemiddelde van de getallen 14, 18, 22 en 26?", o: ["20", "19", "21", "18"], a: 0 },
+                            { q: "Hoeveel gram is 2,75 kilogram?", o: ["2750 gram", "275 gram", "27500 gram", "2075 gram"], a: 0 },
+                            { q: "Wat is 17 × 13?", o: ["221", "211", "231", "201"], a: 0 },
+                            { q: "Bereken: 96 ÷ (12 - 4) + 8", o: ["20", "16", "12", "24"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 2: Procenten, Breuken & Verhoudingen",
+                        questions: [
+                            { q: "Hoeveel is 35% van 240?", o: ["84", "72", "96", "80"], a: 0 },
+                            { q: "Een jas van € 120,- krijgt 25% korting. Wat is de nieuwe prijs?", o: ["€ 90,-", "€ 95,-", "€ 85,-", "€ 100,-"], a: 0 },
+                            { q: "Wat is 3/4 + 2/5?", o: ["23/20 (of 1 3/20)", "5/9", "6/20", "19/20"], a: 0 },
+                            { q: "Welk decimaal getal hoort bij de breuk 5/8?", o: ["0,625", "0,58", "0,65", "0,525"], a: 0 },
+                            { q: "Van de 40 leerlingen zijn er 30 geslaagd. Hoeveel procent is dat?", o: ["75%", "70%", "80%", "65%"], a: 0 },
+                            { q: "Een bedrag stijgt van € 50,- naar € 65,-. Hoeveel procent is de stijging?", o: ["30%", "15%", "25%", "35%"], a: 0 },
+                            { q: "Wat is 2/3 van 135?", o: ["90", "85", "95", "80"], a: 0 },
+                            { q: "Hoeveel is 12,5% van 400?", o: ["50", "45", "60", "40"], a: 0 },
+                            { q: "Vereenvoudig de breuk 42/56 zo ver mogelijk.", o: ["3/4", "6/8", "2/3", "7/9"], a: 0 },
+                            { q: "Een recept voor 4 personen vraagt om 300 gram bloem. Hoeveel gram heb je nodig voor 6 personen?", o: ["450 gram", "400 gram", "500 gram", "425 gram"], a: 0 },
+                            { q: "Wat is 5/6 - 1/3?", o: ["1/2", "4/3", "2/3", "1/3"], a: 0 },
+                            { q: "Je betaalt € 48,- voor een broek na 20% korting. Wat was de oorspronkelijke prijs?", o: ["€ 60,-", "€ 57,60", "€ 64,-", "€ 58,-"], a: 0 },
+                            { q: "Hoeveel is 15% van 60 + 20% van 80?", o: ["25", "23", "27", "21"], a: 0 },
+                            { q: "Welke breuk is het grootst: 2/3, 3/5, 5/8 of 7/12?", o: ["2/3", "3/5", "5/8", "7/12"], a: 0 },
+                            { q: "Een kaart heeft schaal 1 : 50.000. Hoeveel kilometer is 4 cm op de kaart in werkelijkheid?", o: ["2 km", "20 km", "0,2 km", "5 km"], a: 0 },
+                            { q: "Wat is 3/5 × 15/9?", o: ["1", "3/5", "5/3", "9/15"], a: 0 },
+                            { q: "Op een spaarrekening van € 800,- krijg je 2,5% rente per jaar. Hoeveel rente is dat na 1 jaar?", o: ["€ 20,-", "€ 16,-", "€ 25,-", "€ 22,50"], a: 0 },
+                            { q: "Verdeel € 180,- in de verhouding 2 : 3. Hoeveel is het grootste deel?", o: ["€ 108,-", "€ 120,-", "€ 90,-", "€ 110,-"], a: 0 },
+                            { q: "Hoeveel is 0,85 uitgedrukt als vereenvoudigde breuk?", o: ["17/20", "85/10", "16/20", "7/8"], a: 0 },
+                            { q: "Wat is 120% van 75?", o: ["90", "85", "95", "100"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 3: Praktisch Rekenen, Meetkunde & Reeksen",
+                        questions: [
+                            { q: "Wat is de oppervlakte van een rechthoek van 14 cm lang en 8 cm breed?", o: ["112 cm²", "44 cm²", "108 cm²", "122 cm²"], a: 0 },
+                            { q: "Een auto rijdt 2 uur en 30 minuten met een gemiddelde snelheid van 90 km/u. Hoeveel km legt hij af?", o: ["225 km", "210 km", "240 km", "195 km"], a: 0 },
+                            { q: "Welk getal volgt logisch in deze reeks: 3, 7, 13, 21, 31, ...?", o: ["43", "41", "45", "39"], a: 0 },
+                            { q: "Wat is de omtrek van een vierkant met een oppervlakte van 81 cm²?", o: ["36 cm", "18 cm", "27 cm", "40,5 cm"], a: 0 },
+                            { q: "Een driehoek heeft een basis van 12 cm en een hoogte van 7 cm. Wat is de oppervlakte?", o: ["42 cm²", "84 cm²", "19 cm²", "38 cm²"], a: 0 },
+                            { q: "Hoeveel liter water past er in een aquarium van 50 cm bij 30 cm bij 40 cm?", o: ["60 liter", "6 liter", "600 liter", "120 liter"], a: 0 },
+                            { q: "Welk getal ontbreekt: 2, 6, 18, 54, ...?", o: ["162", "108", "144", "152"], a: 0 },
+                            { q: "Twee hoeken van een driehoek zijn 48° en 77°. Hoe groot is de derde hoek?", o: ["55°", "65°", "45°", "50°"], a: 0 },
+                            { q: "Een trein vertrekt om 14:42 en komt aan om 16:18. Hoe lang duurt de reis?", o: ["1 uur en 36 minuten", "1 uur en 26 minuten", "2 uur en 24 minuten", "1 uur en 46 minuten"], a: 0 },
+                            { q: "Wat is de omtrek van een cirkel met een diameter van 10 cm (gebruik π ≈ 3,14)?", o: ["31,4 cm", "15,7 cm", "78,5 cm", "62,8 cm"], a: 0 },
+                            { q: "Samen zijn Lisa en Tom 42 jaar oud. Lisa is 6 jaar ouder dan Tom. Hoe oud is Lisa?", o: ["24 jaar", "21 jaar", "26 jaar", "18 jaar"], a: 0 },
+                            { q: "Als 5 pennen samen € 8,50 kosten, hoeveel kosten dan 8 van dezelfde pennen?", o: ["€ 13,60", "€ 12,80", "€ 14,40", "€ 13,20"], a: 0 },
+                            { q: "Welk getal hoort op de puntjes: 100, 91, 83, 76, 70, ...?", o: ["65", "64", "66", "63"], a: 0 },
+                            { q: "Wat is de inhoud van een kubus met ribben van 5 cm?", o: ["125 cm³", "25 cm³", "150 cm³", "75 cm³"], a: 0 },
+                            { q: "Een fietser legt 45 km af in 1 uur en 30 minuten. Wat is zijn gemiddelde snelheid?", o: ["30 km/u", "35 km/u", "25 km/u", "32,5 km/u"], a: 0 },
+                            { q: "Los op voor x: 3x + 7 = 28", o: ["x = 7", "x = 8", "x = 6", "x = 9"], a: 0 },
+                            { q: "Hoeveel seconden zitten er in een kwartier?", o: ["900 seconden", "600 seconden", "1500 seconden", "450 seconden"], a: 0 },
+                            { q: "Een rechthoekige tuin is 15 meter lang en 9 meter breed. Hoeveel meter schutting is er nodig rondom de hele tuin?", o: ["48 meter", "135 meter", "24 meter", "42 meter"], a: 0 },
+                            { q: "Welk getal volgt in de Fibonacci-achtige reeks: 1, 1, 2, 3, 5, 8, 13, ...?", o: ["21", "18", "20", "24"], a: 0 },
+                            { q: "Een winkel verkoopt 3 zakken appels voor € 5,40. Wat kost 1 zak?", o: ["€ 1,80", "€ 1,60", "€ 1,90", "€ 1,70"], a: 0 }
+                        ]
+                    }
+                ]
+            },
+
+            // =========================================================================
+            // THEMA 3: TAALQUIZ (NEDERLANDS)
+            // =========================================================================
+            {
+                id: "taal",
+                title: "Taalquiz (Nederlands)",
+                subtitle: "Spelling, spreekwoorden, grammatica en woordenschat",
+                icon: "bi-book-half",
+                colorClass: "theme-taal",
+                badgeClass: "bg-success",
+                variants: [
+                    {
+                        title: "Variant 1: Spelling & Werkwoordspelling",
+                        questions: [
+                            { q: "Welke spelling is juist?", o: ["Onmiddellijk", "Onmiddelijk", "Onmidellijk", "Onmidelijk"], a: 0 },
+                            { q: "Kies de juiste vorm: 'Hij ... gisteren het hele huis op.'", o: ["ruimde", "ruimden", "ruimt", "ruime"], a: 0 },
+                            { q: "Welk woord is fout gespeld?", o: ["Akommodatie", "Accommodatie", "Abonnement", "Appartement"], a: 0 },
+                            { q: "Wat is de juiste spelling van het meervoud van 'bacterie'?", o: ["Bacteriën", "Bacterieën", "Bacterien", "Bacterieen"], a: 0 },
+                            { q: "Kies de juiste vorm: 'Wordt / Word jij morgen achttien jaar?'", o: ["Word", "Wordt", "Wort", "Worde"], a: 0 },
+                            { q: "Welke samenstelling is volgens de officiële spelling juist?", o: ["Pannenkoek", "Pannekoek", "Pannen-koek", "Panekoek"], a: 0 },
+                            { q: "Kies de juiste vorm: 'De brief is gisteren ...'", o: ["beantwoord", "beantwoordt", "beantwoort", "beantwoorden"], a: 0 },
+                            { q: "Welke spelling is correct?", o: ["Enthousiast", "Entousiast", "Enthousjast", "Entoesiast"], a: 0 },
+                            { q: "Welk woord krijgt een tussen-n?", o: ["Paardenbloem", "Zonnebloem", "Koninginnedag", "Rijstepap"], a: 0 },
+                            { q: "Kies de juiste vorm: 'Mijn vader ... al twintig jaar in dat bedrijf.'", o: ["werkt", "werk", "werkd", "werkte"], a: 0 },
+                            { q: "Hoe schrijf je dit woord correct?", o: ["Elektriciteit", "Electriciteit", "Elektrisiteit", "Electrisiteit"], a: 0 },
+                            { q: "Welke vorm is juist: 'Het ... gisteren de hele dag.'", o: ["gebeurde", "gebeurden", "gebeurt", "gebeurdde"], a: 0 },
+                            { q: "Wat is de juiste spelling?", o: ["Kopieën", "Kopiën", "Kopieen", "Kopieëen"], a: 0 },
+                            { q: "Kies de juiste persoonsvorm: '... hij dat wel zeker?'", o: ["Weet", "Weetd", "Weten", "Wist"], a: 0 },
+                            { q: "Welke spelling van dit leenwoord is juist?", o: ["Cadeau", "Kado", "Cado", "Kadeau"], a: 0 },
+                            { q: "Kies het juiste voltooid deelwoord: 'Zij heeft het boek ...'", o: ["verbrand", "verbrandt", "verbrant", "verbrandde"], a: 0 },
+                            { q: "Welke spelling is correct?", o: ["Reclame", "Reklame", "Reclaame", "Reklaame"], a: 0 },
+                            { q: "Kies de juiste vorm: 'De kinderen ... vrolijk in de tuin.'", o: ["speelden", "spelden", "speelde", "spelen"], a: 0 },
+                            { q: "Hoe schrijf je dit woord foutloos?", o: ["Bibliotheek", "Biebliotheek", "Biblioteek", "Biblijotheek"], a: 0 },
+                            { q: "Kies de juiste vorm: 'Dat ... mij helemaal niets!'", o: ["scheelt", "scheel", "scheeld", "scheelde"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 2: Spreekwoorden & Uitdrukkingen",
+                        questions: [
+                            { q: "Wat betekent het spreekwoord: 'De kat uit de boom kijken'?", o: ["Eerst afwachten hoe iets verloopt voordat je actie onderneemt", "Heel goed kunnen klimmen", "Iemand stiekem bespioneren", "Bang zijn voor huisdieren"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'Wie een kuil graaft voor een ander, ...'", o: ["valt er zelf in", "wordt er zelf moe van", "vindt geen schat", "krijgt vieze handen"], a: 0 },
+                            { q: "Wat betekent 'Met de deur in huis vallen'?", o: ["Direct zonder inleiding zeggen waar het om gaat", "Een ongeluk veroorzaken bij binnenkomst", "Onbeleefd tegen gasten schreeuwen", "Te laat op een afspraak komen"], a: 0 },
+                            { q: "Wat betekent het als iemand 'een appeltje met je te schillen heeft'?", o: ["Diegene wil iets vervelends of een conflict met je uitpraten", "Diegene wil samen taart bakken", "Diegene heeft een cadeau voor je", "Diegene vraagt je om hulp bij het koken"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'Oost west, ...'", o: ["thuis best", "noord zuid", "altijd feest", "goed geweest"], a: 0 },
+                            { q: "Wat betekent 'Door de bomen het bos niet meer zien'?", o: ["Door te veel details het overzicht kwijtraken", "Verdwaald zijn in de natuur", "Een bril nodig hebben", "Te snel door een park fietsen"], a: 0 },
+                            { q: "Wat betekent 'Iemand een hart onder de riem steken'?", o: ["Iemand moed inspreken en steunen", "Iemand heel erg laten schrikken", "Iemand een geheim vertellen", "Iemand bekritiseren"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'De appel valt niet ver ...'", o: ["van de boom", "in het gras", "op de grond", "uit de mand"], a: 0 },
+                            { q: "Wat betekent 'Het neusje van de zalm'?", o: ["Het allerbeste van iets", "Iets dat heel vies ruikt", "Een duur visgerecht", "Het kleinste onderdeel"], a: 0 },
+                            { q: "Wat betekent 'Water naar de zee dragen'?", o: ["Iets totaal overbodigs doen", "Heel hard werken in de haven", "Zuinig zijn met drinkwater", "Een groot probleem oplossen"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'Beter één vogel in de hand, ...'", o: ["dan tien in de lucht", "dan twee op het dak", "dan een lege kooi", "dan geen enkel dier"], a: 0 },
+                            { q: "Wat betekent 'Iets met een korreltje zout nemen'?", o: ["Iets niet helemaal letterlijk of serieus geloven", "Eten extra op smaak brengen", "Heel boos worden om een grap", "Alles precies onthouden"], a: 0 },
+                            { q: "Wat betekent 'Op hete kolen zitten'?", o: ["Erg ongeduldig of zenuwachtig zijn", "Het heel warm hebben in de zomer", "In de problemen zitten op school", "Aan het barbecueën zijn"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'Hoge bomen ...'", o: ["vangen veel wind", "hebben diepe wortels", "groeien tot in de hemel", "geven veel schaduw"], a: 0 },
+                            { q: "Wat betekent 'Boter bij de vis'?", o: ["Direct betalen bij levering", "Lekker en gezond koken", "Een oneerlijke ruil sluiten", "Lang wachten op je geld"], a: 0 },
+                            { q: "Wat betekent 'De spijker op zijn kop slaan'?", o: ["Precies het juiste zeggen of doen", "Een fout maken bij het klussen", "Iemand hard raken met woorden", "Een nieuw huis bouwen"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'Als de kat van huis is, ...'", o: ["dansen de muizen op tafel", "is het rustig in de kamer", "slaapt de hond op de bank", "gaan de vogels fluiten"], a: 0 },
+                            { q: "Wat betekent 'Iemand met een kluitje in het riet sturen'?", o: ["Iemand met een smoesje afschepen", "Iemand de weg wijzen naar het water", "Iemand helpen met tuinieren", "Iemand een moeilijke opdracht geven"], a: 0 },
+                            { q: "Wat betekent 'Twee vliegen in één klap slaan'?", o: ["Met één handeling twee doelen tegelijk bereiken", "Heel snel kunnen reageren", "Twee fouten achter elkaar maken", "Geen last meer hebben van insecten"], a: 0 },
+                            { q: "Maak het spreekwoord af: 'De beste stuurlui ...'", o: ["staan aan wal", "varen op zee", "hebben een kompas", "kennen de wind"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 3: Woordenschat & Grammatica",
+                        questions: [
+                            { q: "Wat is een synoniem voor het woord 'authentiek'?", o: ["Echt / oorspronkelijk", "Nagemaakt", "Modern", "Geheimzinnig"], a: 0 },
+                            { q: "Wat is het tegenovergestelde (antoniem) van 'optimistisch'?", o: ["Pessimistisch", "Realistisch", "Enthousiast", "Creatief"], a: 0 },
+                            { q: "Wat betekent het woord 'ambivalent'?", o: ["Tegenstrijdige gevoelens of gedachten hebbend", "Heel duidelijk en zeker", "Snel boos wordend", "Buitengewoon vrolijk"], a: 0 },
+                            { q: "Welk lidwoord hoort bij het woord 'museum'?", o: ["Het museum", "De museum", "Een museum (alleen onbepaald)", "Zowel de als het"], a: 0 },
+                            { q: "Wat is de persoonsvorm in de zin: 'Gisteren hebben wij een lange wandeling gemaakt.'?", o: ["hebben", "gemaakt", "wandeling", "wij"], a: 0 },
+                            { q: "Wat betekent 'pragmatisch'?", o: ["Praktisch en gericht op wat werkt", "Dromerig en theoretisch", "Streng volgens de regels", "Zonder enig plan"], a: 0 },
+                            { q: "Welke woordsoort is het dikgedrukte woord in: 'De **snelle** fietser won de wedstrijd.'?", o: ["Bijvoeglijk naamwoord", "Bijwoord", "Zelfstandig naamwoord", "Werkwoord"], a: 0 },
+                            { q: "Wat betekent het bijvoeglijk naamwoord 'lucratief'?", o: ["Winstgevend", "Verliesgevend", "Risicovol", "Tijdrovend"], a: 0 },
+                            { q: "Welk lidwoord hoort bij 'aardbei'?", o: ["De aardbei", "Het aardbei", "Beide zijn goed", "Geen lidwoord mogelijk"], a: 0 },
+                            { q: "Wat is het onderwerp in de zin: 'Op het plein spelen de kinderen met een bal.'?", o: ["de kinderen", "Op het plein", "een bal", "spelen"], a: 0 },
+                            { q: "Wat betekent 'consensus'?", o: ["Overeenstemming tussen betrokkenen", "Een heftige ruzie", "Een geheime stemming", "Een nieuw wetsvoorstel"], a: 0 },
+                            { q: "Wat is een synoniem voor 'consequent'?", o: ["Doelbewust en gelijkblijvend in gedrag", "Wispelturig", "Twijfelend", "Onvoorzichtig"], a: 0 },
+                            { q: "Welk woord is een voegwoord in: 'Ik blijf thuis, omdat het hard regent.'?", o: ["omdat", "thuis", "hard", "regent"], a: 0 },
+                            { q: "Wat betekent het woord 'hypothese'?", o: ["Een veronderstelling die nog bewezen moet worden", "Een vaststaand wetenschappelijk feit", "Een samenvatting aan het einde", "Een wiskundige formule"], a: 0 },
+                            { q: "Wat is de vergrotende trap van 'goed'?", o: ["Beter", "Goeder", "Best", "Meer goed"], a: 0 },
+                            { q: "Wat betekent 'subtiel'?", o: ["Fijnzinnig en nauwelijks opvallend", "Heel luid en grof", "Eenvoudig en groot", "Snel en krachtig"], a: 0 },
+                            { q: "Welk lidwoord hoort bij 'meisje'?", o: ["Het meisje", "De meisje", "Beide zijn juist", "Alleen 'de' in het meervoud"], a: 0 },
+                            { q: "Wat betekent 'redundant'?", o: ["Overbodig", "Onmisbaar", "Zeldzaam", "Ingewikkeld"], a: 0 },
+                            { q: "Welk woord in deze zin is een voorzetsel: 'De kat slaapt onder de warme deken.'?", o: ["onder", "slaapt", "warme", "deken"], a: 0 },
+                            { q: "Wat betekent het woord 'ironisch'?", o: ["Mild spottend, waarbij vaak het tegenovergestelde wordt bedoeld", "Zeer verdrietig en serieus", "Volledig letterlijk bedoeld", "Woedend en agressief"], a: 0 }
+                        ]
+                    }
+                ]
+            },
+
+            // =========================================================================
+            // THEMA 4: HOOFDSTEDEN VAN LANDEN
+            // =========================================================================
+            {
+                id: "hoofdsteden",
+                title: "Hoofdsteden van Landen",
+                subtitle: "Test je topografische kennis over alle werelddelen",
+                icon: "bi-globe-europe-africa",
+                colorClass: "theme-hoofdsteden",
+                badgeClass: "bg-purple text-white",
+                variants: [
+                    {
+                        title: "Variant 1: Europa",
+                        questions: [
+                            { q: "Wat is de hoofdstad van Zwitserland?", o: ["Bern", "Zürich", "Genève", "Bazel"], a: 0 },
+                            { q: "Wat is de hoofdstad van Noorwegen?", o: ["Oslo", "Bergen", "Stockholm", "Helsinki"], a: 0 },
+                            { q: "Wat is de hoofdstad van Polen?", o: ["Warschau", "Krakau", "Gdansk", "Poznan"], a: 0 },
+                            { q: "Wat is de hoofdstad van Portugal?", o: ["Lissabon", "Porto", "Faro", "Coimbra"], a: 0 },
+                            { q: "Wat is de hoofdstad van Hongarije?", o: ["Boedapest", "Boekarest", "Bratislava", "Sofia"], a: 0 },
+                            { q: "Wat is de hoofdstad van Finland?", o: ["Helsinki", "Oslo", "Tallinn", "Riga"], a: 0 },
+                            { q: "Wat is de hoofdstad van Roemenië?", o: ["Boekarest", "Boedapest", "Sofia", "Chisinau"], a: 0 },
+                            { q: "Wat is de hoofdstad van Schotland (onderdeel van het VK)?", o: ["Edinburgh", "Glasgow", "Aberdeen", "Belfast"], a: 0 },
+                            { q: "Wat is de hoofdstad van Kroatië?", o: ["Zagreb", "Split", "Ljubljana", "Belgrado"], a: 0 },
+                            { q: "Wat is de hoofdstad van Ierland?", o: ["Dublin", "Belfast", "Cork", "Galway"], a: 0 },
+                            { q: "Wat is de hoofdstad van Tsjechië?", o: ["Praag", "Brno", "Bratislava", "Wenen"], a: 0 },
+                            { q: "Wat is de hoofdstad van Letland?", o: ["Riga", "Tallinn", "Vilnius", "Minsk"], a: 0 },
+                            { q: "Wat is de hoofdstad van IJsland?", o: ["Reykjavik", "Akureyri", "Tórshavn", "Nuuk"], a: 0 },
+                            { q: "Wat is de hoofdstad van Bulgarije?", o: ["Sofia", "Varna", "Skopje", "Tirana"], a: 0 },
+                            { q: "Wat is de hoofdstad van Slowakije?", o: ["Bratislava", "Ljubljana", "Praag", "Zagreb"], a: 0 },
+                            { q: "Wat is de hoofdstad van Estland?", o: ["Tallinn", "Riga", "Vilnius", "Helsinki"], a: 0 },
+                            { q: "Wat is de hoofdstad van Servië?", o: ["Belgrado", "Sarajevo", "Podgorica", "Skopje"], a: 0 },
+                            { q: "Wat is de hoofdstad van Slovenië?", o: ["Ljubljana", "Zagreb", "Bratislava", "Graz"], a: 0 },
+                            { q: "Wat is de hoofdstad van Albanië?", o: ["Tirana", "Pristina", "Skopje", "Podgorica"], a: 0 },
+                            { q: "Wat is de hoofdstad van Malta?", o: ["Valletta", "Sliema", "Nicosia", "Palermo"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 2: Azië & Het Midden-Oosten",
+                        questions: [
+                            { q: "Wat is de hoofdstad van Japan?", o: ["Tokio", "Osaka", "Kyoto", "Yokohama"], a: 0 },
+                            { q: "Wat is de hoofdstad van Zuid-Korea?", o: ["Seoel", "Busan", "Incheon", "Pyongyang"], a: 0 },
+                            { q: "Wat is de hoofdstad van Thailand?", o: ["Bangkok", "Phuket", "Chiang Mai", "Hanoi"], a: 0 },
+                            { q: "Wat is de hoofdstad van Vietnam?", o: ["Hanoi", "Ho Chi Minhstad", "Da Nang", "Phnom Penh"], a: 0 },
+                            { q: "Wat is de hoofdstad van India?", o: ["New Delhi", "Mumbai", "Calcutta", "Bangalore"], a: 0 },
+                            { q: "Wat is de hoofdstad van Indonesië?", o: ["Jakarta", "Bali", "Surabaya", "Bandung"], a: 0 },
+                            { q: "Wat is de hoofdstad van Saoedi-Arabië?", o: ["Riyad", "Djedda", "Mekka", "Medina"], a: 0 },
+                            { q: "Wat is de hoofdstad van de Verenigde Arabische Emiraten?", o: ["Abu Dhabi", "Dubai", "Sharjah", "Doha"], a: 0 },
+                            { q: "Wat is de hoofdstad van Maleisië?", o: ["Kuala Lumpur", "Singapore", "Penang", "Manilla"], a: 0 },
+                            { q: "Wat is de hoofdstad van de Filipijnen?", o: ["Manilla", "Cebu", "Davao", "Taipei"], a: 0 },
+                            { q: "Wat is de hoofdstad van Jordanië?", o: ["Amman", "Beiroet", "Damascus", "Petra"], a: 0 },
+                            { q: "Wat is de hoofdstad van Iran?", o: ["Teheran", "Isfahan", "Shiraz", "Tabriz"], a: 0 },
+                            { q: "Wat is de hoofdstad van Pakistan?", o: ["Islamabad", "Karachi", "Lahore", "Kaboel"], a: 0 },
+                            { q: "Wat is de hoofdstad van Kazachstan?", o: ["Astana", "Almaty", "Tasjkent", "Bisjkek"], a: 0 },
+                            { q: "Wat is de hoofdstad van Libanon?", o: ["Beiroet", "Damascus", "Amman", "Tripoli"], a: 0 },
+                            { q: "Wat is de hoofdstad van Nepal?", o: ["Kathmandu", "Thimphu", "Dhaka", "Lhasa"], a: 0 },
+                            { q: "Wat is de hoofdstad van Oezbekistan?", o: ["Tasjkent", "Samarkand", "Asjchabad", "Doesjanbe"], a: 0 },
+                            { q: "Wat is de hoofdstad van Qatar?", o: ["Doha", "Manama", "Koeweit-Stad", "Muscat"], a: 0 },
+                            { q: "Wat is de hoofdstad van Bangladesh?", o: ["Dhaka", "Chittagong", "Colombo", "Yangon"], a: 0 },
+                            { q: "Wat is de hoofdstad van Mongolië?", o: ["Ulaanbaatar", "Astana", "Irkoetsk", "Harbin"], a: 0 }
+                        ]
+                    },
+                    {
+                        title: "Variant 3: Amerika, Afrika & Oceanië",
+                        questions: [
+                            { q: "Wat is de hoofdstad van Canada?", o: ["Ottawa", "Toronto", "Vancouver", "Montreal"], a: 0 },
+                            { q: "Wat is de hoofdstad van Brazilië?", o: ["Brasilia", "Rio de Janeiro", "São Paulo", "Salvador"], a: 0 },
+                            { q: "Wat is de hoofdstad van Australië?", o: ["Canberra", "Sydney", "Melbourne", "Perth"], a: 0 },
+                            { q: "Wat is de hoofdstad van Argentinië?", o: ["Buenos Aires", "Córdoba", "Rosario", "Montevideo"], a: 0 },
+                            { q: "Wat is de hoofdstad van Marokko?", o: ["Rabat", "Casablanca", "Marrakech", "Fes"], a: 0 },
+                            { q: "Wat is de hoofdstad van Egypte?", o: ["Caïro", "Alexandrië", "Luxor", "Gizeh"], a: 0 },
+                            { q: "Wat is de hoofdstad van Nieuw-Zeeland?", o: ["Wellington", "Auckland", "Christchurch", "Queenstown"], a: 0 },
+                            { q: "Wat is de hoofdstad van Chili?", o: ["Santiago", "Valparaíso", "Lima", "Bogotá"], a: 0 },
+                            { q: "Wat is de hoofdstad van Peru?", o: ["Lima", "Cusco", "Quito", "La Paz"], a: 0 },
+                            { q: "Wat is de hoofdstad van Kenia?", o: ["Nairobi", "Mombasa", "Dar es Salaam", "Kampala"], a: 0 },
+                            { q: "Wat is de hoofdstad van Colombia?", o: ["Bogotá", "Medellín", "Cali", "Caracas"], a: 0 },
+                            { q: "Wat is de hoofdstad van Nigeria?", o: ["Abuja", "Lagos", "Kano", "Accra"], a: 0 },
+                            { q: "Wat is de hoofdstad van Cuba?", o: ["Havana", "Santiago de Cuba", "Varadero", "San Juan"], a: 0 },
+                            { q: "Wat is de hoofdstad van Tunesië?", o: ["Tunis", "Sousse", "Algiers", "Tripoli"], a: 0 },
+                            { q: "Wat is de hoofdstad van Ethiopië?", o: ["Addis Abeba", "Asmara", "Khartoem", "Nairobi"], a: 0 },
+                            { q: "Wat is de hoofdstad van Ghana?", o: ["Accra", "Kumasi", "Dakar", "Abidjan"], a: 0 },
+                            { q: "Wat is de hoofdstad van Uruguay?", o: ["Montevideo", "Asunción", "Buenos Aires", "Sucre"], a: 0 },
+                            { q: "Wat is de hoofdstad van Senegal?", o: ["Dakar", "Bamako", "Banjul", "Conakry"], a: 0 },
+                            { q: "Wat is de hoofdstad van Costa Rica?", o: ["San José", "San Salvador", "Panama-Stad", "Managua"], a: 0 },
+                            { q: "Wat is de hoofdstad van Suriname?", o: ["Paramaribo", "Georgetown", "Cayenne", "Willemstad"], a: 0 }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // =========================================================================
+        // APPLICATIE STATE
+        // =========================================================================
+        let currentTheme = null;
+        let currentVariant = null;
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+        let quitModalInstance = null;
+
+        const optionLetters = ["A", "B", "C", "D"];
+
+        // =========================================================================
+        // INITIALISATIE
+        // =========================================================================
+        document.addEventListener("DOMContentLoaded", () => {
+            renderMenu();
+            const modalEl = document.getElementById("quitModal");
+            if (modalEl) {
+                quitModalInstance = new bootstrap.Modal(modalEl);
+            }
+        });
+
+        /**
+         * Bouwt het hoofdmenu met de 4 thema-kaarten en elk 3 varianten
+         */
+        function renderMenu() {
+            const grid = document.getElementById("themesGrid");
+            grid.innerHTML = "";
+
+            quizDatabase.forEach((theme, themeIdx) => {
+                const col = document.createElement("div");
+                col.className = "col-12 col-md-6";
+
+                const variantsHtml = theme.variants.map((variant, varIdx) => `
+                    <button type="button" class="variant-btn w-100 mb-2" onclick="startQuiz(${themeIdx}, ${varIdx})">
+                        <span>
+                            <i class="bi bi-play-circle-fill text-primary me-2"></i>
+                            ${variant.title}
+                        </span>
+                        <span class="badge bg-white text-secondary border rounded-pill">20 vr.</span>
+                    </button>
+                `).join("");
+
+                col.innerHTML = `
+                    <div class="card theme-card h-100">
+                        <div class="theme-header ${theme.colorClass}">
+                            <i class="bi ${theme.icon} theme-icon-bg"></i>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi ${theme.icon} fs-4"></i>
+                                <h4 class="fw-bold mb-0">${theme.title}</h4>
+                            </div>
+                            <p class="mb-0 small opacity-75">${theme.subtitle}</p>
+                        </div>
+                        <div class="card-body p-3 p-md-4 d-flex flex-column justify-content-center">
+                            <p class="small text-uppercase fw-bold text-muted mb-2" style="letter-spacing: 0.5px;">
+                                Kies een variant:
+                            </p>
+                            ${variantsHtml}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+        }
+
+        /**
+         * Schudt de antwoordopties van een vraag willekeurig zodat het juiste antwoord
+         * niet altijd op positie A staat, terwijl de juiste index behouden blijft.
+         */
+        function prepareQuestions(rawQuestions) {
+            return rawQuestions.map(item => {
+                const correctText = item.o[item.a];
+                const shuffledOptions = [...item.o];
+
+                // Fisher-Yates shuffle voor de 4 opties
+                for (let i = shuffledOptions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+                }
+
+                return {
+                    q: item.q,
+                    o: shuffledOptions,
+                    a: shuffledOptions.indexOf(correctText)
+                };
+            });
+        }
+
+        /**
+         * Start een gekozen quizvariant
+         */
+        function startQuiz(themeIdx, varIdx) {
+            currentTheme = quizDatabase[themeIdx];
+            currentVariant = currentTheme.variants[varIdx];
+            currentQuestions = prepareQuestions(currentVariant.questions);
+            currentQuestionIndex = 0;
+            score = 0;
+            isAnswered = false;
+
+            // Vergrendel de mobiele viewport op 100dvh tijdens de quiz
+            document.body.classList.add("quiz-active");
+
+            // UI bijwerken
+            document.getElementById("menuView").classList.add("d-none");
+            document.getElementById("resultView").classList.add("d-none");
+            document.getElementById("quizView").classList.remove("d-none");
+            document.getElementById("navHomeBtn").classList.remove("d-none");
+
+            // Badges en titels instellen
+            const badge = document.getElementById("quizThemeBadge");
+            badge.textContent = currentTheme.title;
+            badge.className = `badge rounded-pill px-3 py-2 mb-1 ${currentTheme.colorClass} text-white`;
+
+            document.getElementById("quizVariantTitle").textContent = currentVariant.title;
+            document.getElementById("liveScoreBadge").textContent = `Score: 0`;
+
+            window.scrollTo({ top: 0, behavior: "instant" });
+            renderQuestion();
+        }
+
+        /**
+         * Toont de huidige vraag en de 4 antwoordopties
+         */
+        function renderQuestion() {
+            isAnswered = false;
+            const total = currentQuestions.length;
+            const qObj = currentQuestions[currentQuestionIndex];
+
+            // Voortgang bijwerken
+            document.getElementById("questionCounter").textContent = `Vraag ${currentQuestionIndex + 1} van ${total}`;
+            const progressPercent = ((currentQuestionIndex) / total) * 100;
+            document.getElementById("quizProgressBar").style.width = `${progressPercent}%`;
+
+            // Vraagtekst
+            document.getElementById("questionText").textContent = qObj.q;
+
+            // Reset feedback-banner en volgende-knop zonder hoogteverspringing
+            const feedbackBanner = document.getElementById("feedbackBanner");
+            feedbackBanner.style.visibility = "hidden";
+            feedbackBanner.className = "rounded-3 px-3 py-2 mb-2 small fw-semibold d-flex align-items-center gap-2";
+
+            const nextBtn = document.getElementById("nextQuestionBtn");
+            nextBtn.classList.add("is-hidden");
+            nextBtn.innerHTML = (currentQuestionIndex === total - 1)
+                ? `Bekijk eindresultaat <i class="bi bi-trophy-fill ms-2"></i>`
+                : `Volgende vraag <i class="bi bi-arrow-right ms-2"></i>`;
+
+            // Opties renderen
+            const container = document.getElementById("optionsContainer");
+            container.innerHTML = "";
+
+            qObj.o.forEach((optionText, idx) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "option-btn";
+                btn.innerHTML = `
+                    <span class="option-letter">${optionLetters[idx]}</span>
+                    <span class="flex-grow-1">${optionText}</span>
+                `;
+                btn.onclick = () => handleAnswer(idx, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        /**
+         * Verwerkt het gekozen antwoord en geeft direct visuele feedback
+         */
+        function handleAnswer(selectedIndex, selectedBtn) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const qObj = currentQuestions[currentQuestionIndex];
+            const correctIndex = qObj.a;
+            const allButtons = document.querySelectorAll("#optionsContainer .option-btn");
+            const feedbackBanner = document.getElementById("feedbackBanner");
+            const feedbackIcon = document.getElementById("feedbackIcon");
+            const feedbackSummary = document.getElementById("feedbackSummary");
+
+            // Alle knoppen uitschakelen en kleuren toewijzen
+            allButtons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === correctIndex) {
+                    btn.classList.add("correct");
+                    btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-check-lg"></i>`;
+                } else if (idx === selectedIndex) {
+                    btn.classList.add("wrong");
+                    btn.querySelector(".option-letter").innerHTML = `<i class="bi bi-x-lg"></i>`;
+                } else {
+                    btn.classList.add("dimmed");
+                }
+            });
+
+            // Compacte feedback-banner en score bijwerken
+            feedbackBanner.style.visibility = "visible";
+
+            if (selectedIndex === correctIndex) {
+                score++;
+                document.getElementById("liveScoreBadge").textContent = `Score: ${score}`;
+                feedbackBanner.classList.add("bg-success-subtle", "text-success");
+                feedbackIcon.className = "bi bi-check-circle-fill flex-shrink-0";
+                feedbackSummary.textContent = "Goed gedaan! Dat is het juiste antwoord.";
+            } else {
+                feedbackBanner.classList.add("bg-danger-subtle", "text-danger");
+                feedbackIcon.className = "bi bi-exclamation-circle-fill flex-shrink-0";
+                feedbackSummary.innerHTML = `Fout! Juist: <strong>${optionLetters[correctIndex]} (${qObj.o[correctIndex]})</strong>`;
+            }
+
+            // Voortgangsbalk naar huidige voltooide vraag zetten
+            const progressPercent = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
+            document.getElementById("quizProgressBar").style.width = `${progressPercent}%`;
+
+            // Volgende vraag knop zichtbaar maken (ruimte was al gereserveerd)
+            document.getElementById("nextQuestionBtn").classList.remove("is-hidden");
+        }
+
+        /**
+         * Gaat naar de volgende vraag of toont het eindresultaat
+         */
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuestions.length) {
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        /**
+         * Toont het resultatenscherm met score, percentage en beoordeling
+         */
+        function showResults() {
+            document.body.classList.remove("quiz-active");
+            document.getElementById("quizView").classList.add("d-none");
+            document.getElementById("resultView").classList.remove("d-none");
+
+            const total = currentQuestions.length;
+            const percentage = Math.round((score / total) * 100);
+            const wrong = total - score;
+
+            document.getElementById("resultThemeLabel").textContent = `${currentTheme.title} • ${currentVariant.title}`;
+            document.getElementById("finalScoreText").textContent = `${score} / ${total}`;
+            document.getElementById("finalPercentageText").textContent = `${percentage}%`;
+            document.getElementById("correctCountStat").textContent = score;
+            document.getElementById("wrongCountStat").textContent = wrong;
+
+            const circle = document.getElementById("scoreCircle");
+            const ratingTitle = document.getElementById("resultRatingTitle");
+            const ratingMsg = document.getElementById("resultRatingMessage");
+
+            if (percentage >= 85) {
+                circle.style.borderColor = "#10b981";
+                ratingTitle.textContent = "Meesterlijk! Een topscore!";
+                ratingMsg.textContent = "Indrukwekkend resultaat! Je hebt een uitstekende kennis van dit onderwerp.";
+            } else if (percentage >= 65) {
+                circle.style.borderColor = "#3b82f6";
+                ratingTitle.textContent = "Goed gedaan! Ruim voldoende.";
+                ratingMsg.textContent = "Je hebt de meeste vragen goed beantwoord. Met nog een beetje oefening haal je de 100%!";
+            } else if (percentage >= 45) {
+                circle.style.borderColor = "#f59e0b";
+                ratingTitle.textContent = "Aardig op weg!";
+                ratingMsg.textContent = "Je weet er al het nodige van, maar er valt nog wat te ontdekken. Probeer het gerust nog eens!";
+            } else {
+                circle.style.borderColor = "#ef4444";
+                ratingTitle.textContent = "Blijf oefenen!";
+                ratingMsg.textContent = "Dit was een pittige ronde. Speel de quiz opnieuw om je score te verbeteren!";
+            }
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        /**
+         * Herstart dezelfde quizvariant met opnieuw geschudde antwoorden
+         */
+        function restartCurrentQuiz() {
+            const themeIdx = quizDatabase.indexOf(currentTheme);
+            const varIdx = currentTheme.variants.indexOf(currentVariant);
+            startQuiz(themeIdx, varIdx);
+        }
+
+        /**
+         * Vraagt bevestiging als de gebruiker midden in een quiz zit
+         */
+        function confirmReturnToMenu() {
+            const quizVisible = !document.getElementById("quizView").classList.contains("d-none");
+            if (quizVisible && currentQuestionIndex > 0 && quitModalInstance) {
+                quitModalInstance.show();
+            } else {
+                showMenuDirectly();
+            }
+        }
+
+        function returnToMenu(event) {
+            if (event) event.preventDefault();
+            confirmReturnToMenu();
+        }
+
+        /**
+         * Keert direct terug naar het hoofdmenu
+         */
+        function showMenuDirectly() {
+            document.body.classList.remove("quiz-active");
+            document.getElementById("quizView").classList.add("d-none");
+            document.getElementById("resultView").classList.add("d-none");
+            document.getElementById("navHomeBtn").classList.add("d-none");
+            document.getElementById("menuView").classList.remove("d-none");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    </script>
+</body>
+</html>
