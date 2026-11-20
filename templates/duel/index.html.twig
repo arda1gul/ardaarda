@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelen.nl - Wie Kent Wie Duel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .gaming-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+    </style>
+</head>
+<body class="py-4 py-md-5">
+
+    <div class="container" style="max-width: 750px;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ path('app_home') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Terug naar Hub
+            </a>
+            <span class="text-secondary small">Speler: <strong class="text-white">{{ username }}</strong> vs <strong class="text-info">{{ opponent }}</strong></span>
+        </div>
+
+        <div class="text-center mb-4">
+            <h1 class="fw-bold mb-1"><i class="bi bi-people-fill text-danger"></i> Wie Kent Wie? (Ronde {{ round }})</h1>
+            <p class="text-secondary small">Beantwoord de stellingen over jezelf én voorspel het antwoord van {{ opponent }}!</p>
+        </div>
+
+        {% if not hasSubmitted %}
+            <!-- FORMULIER OM IN TE VULLEN -->
+            <form method="post">
+                <div class="d-flex flex-column gap-4 mb-4">
+                    {% for q in questions %}
+                        <div class="gaming-card p-4">
+                            <h5 class="fw-bold text-white mb-3">Vraag {{ loop.index }}: {{ q.text }}</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-secondary small fw-bold">Jouw eigen antwoord:</label>
+                                <input type="text" name="own_{{ q.id }}" class="form-control bg-dark text-white border-secondary" placeholder="Wat is jouw antwoord?" required>
+                            </div>
+
+                            <div>
+                                <label class="form-label text-info small fw-bold">Wat denk je dat {{ opponent }} hierop antwoordt?</label>
+                                <input type="text" name="guess_{{ q.id }}" class="form-control bg-dark text-white border-secondary" placeholder="Voorspel het antwoord van de ander..." required>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100 py-3 fw-bold rounded-pill text-white shadow">
+                    <i class="bi bi-send-fill"></i> Antwoorden Definitief Inzenden
+                </button>
+            </form>
+
+        {% elseif not readyToCompare %}
+            <!-- WACHTEN OP DE TEGENSTANDER -->
+            <div class="gaming-card p-5 text-center">
+                <div class="display-4 text-warning mb-3"><i class="bi bi-hourglass-split"></i></div>
+                <h3 class="fw-bold text-white">Antwoorden opgeslagen!</h3>
+                <p class="text-secondary mb-0">Je hebt je antwoorden ingediend voor Ronde {{ round }}. Wacht even tot <strong>{{ opponent }}</strong> ook klaar is om de resultaten te vergelijken!</p>
+            </div>
+
+        {% else %}
+            <!-- RESULTATEN & VERGELIJKING -->
+            <div class="gaming-card p-4 mb-4 text-center border-success">
+                <h3 class="fw-bold text-success mb-2"><i class="bi bi-trophy-fill"></i> Ronde {{ round }} Resultaten!</h3>
+                <p class="text-secondary small">Beide spelers hebben ingediend. Tijd om te kijken hoe goed jullie elkaar kennen!</p>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+                {% for q in questions %}
+                    <div class="gaming-card p-3">
+                        <h6 class="fw-bold text-white mb-3 border-bottom border-secondary pb-2">{{ loop.index }}. {{ q.text }}</h6>
+                        <div class="row g-2 small">
+                            <div class="col-md-6 p-2 bg-dark rounded border border-secondary border-opacity-25">
+                                <span class="text-secondary d-block">Jouw antwoord:</span>
+                                <strong class="text-white">...</strong>
+                            </div>
+                            <div class="col-md-6 p-2 bg-dark rounded border border-secondary border-opacity-25">
+                                <span class="text-secondary d-block">Antwoord van {{ opponent }}:</span>
+                                <strong class="text-info">...</strong>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
